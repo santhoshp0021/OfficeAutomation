@@ -124,13 +124,35 @@ exports.setGuideSelectionDates = async (req, res) => {
 
         let config = await Config.findOne();
         if (!config) {
-            config = new Config({ guideSelectionStartDate: start, guideSelectionEndDate: end });
+            config = new Config({ guideSelectionStartDate: start, guideSelectionEndDate: end, teamFormationOpen: false });
         } else {
             config.guideSelectionStartDate = start;
             config.guideSelectionEndDate = end;
+            config.teamFormationOpen = false;
         }
 
         await config.save();
+
+        // --- New logic: Assign solo teams to students not in any team ---
+        const students = await User.find({ 'roles.role': 'student' });
+        const studentsInTeams = await Team.find({}, 'teamLeader members');
+        const assignedStudentIds = new Set();
+        studentsInTeams.forEach(team => {
+            assignedStudentIds.add(team.teamLeader.toString());
+            team.members.forEach(m => assignedStudentIds.add(m.toString()));
+        });
+        const soloStudents = students.filter(s => !assignedStudentIds.has(s._id.toString()));
+        for (const student of soloStudents) {
+            const soloTeam = new Team({
+                teamName: `Solo Team ${student.username}`,
+                teamLeader: student._id,
+                members: [],
+                status: 'pending'
+            });
+            await soloTeam.save();
+        }
+        // --- End new logic ---
+
         res.json({ message: 'Guide selection dates updated successfully', config });
     } catch (error) {
         console.error('Error setting guide selection dates:', error);

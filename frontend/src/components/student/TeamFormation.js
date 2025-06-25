@@ -11,6 +11,7 @@ const TeamFormation = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [existingTeam, setExistingTeam] = useState(null);
+    const [teamFormationOpen, setTeamFormationOpen] = useState(true);
 
     useEffect(() => {
         fetchData();
@@ -54,7 +55,8 @@ const TeamFormation = () => {
                 }),
                 axios.get('http://localhost:5000/api/teams/max-team-size', { // Fetch max team size from new public endpoint
                     headers: { Authorization: `Bearer ${token}` }
-                })
+                }),
+                axios.get('http://localhost:5000/api/config/public')
             ]);
     
             setAvailableStudents(studentsRes.data);
@@ -69,6 +71,11 @@ const TeamFormation = () => {
             // Update maxTeamSize from backend config
             if (configRes.data && configRes.data.maxTeamSize) {
                 setMaxTeamSize(configRes.data.maxTeamSize);
+            }
+
+            // Fetch teamFormationOpen from config
+            if (configRes.data && typeof configRes.data.teamFormationOpen !== 'undefined') {
+                setTeamFormationOpen(configRes.data.teamFormationOpen);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -122,6 +129,20 @@ const TeamFormation = () => {
             setError(error.response?.data?.message || 'Error creating team');
         }
     };
+
+    if (!teamFormationOpen) {
+        return (
+            <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-semibold mb-4">Team Formation</h2>
+                <p className="text-gray-600 text-lg font-medium mb-2">
+                    Team formation is now closed.
+                </p>
+                <p className="text-gray-500 mb-4">
+                    You can no longer form or join teams. Please proceed to the next steps as instructed.
+                </p>
+            </div>
+        );
+    }
 
     if (loading) {
         return <div className="flex justify-center items-center h-64">

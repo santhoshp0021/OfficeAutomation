@@ -81,6 +81,9 @@ exports.createTeam = async (req, res) => {
 
         // Get max team size from config
         const config = await Config.findOne();
+        if (!config || config.teamFormationOpen === false) {
+            return res.status(400).json({ message: 'Team formation is closed.' });
+        }
         const maxTeamSize = config ? config.maxTeamSize : 4;
 
         // Validate team size

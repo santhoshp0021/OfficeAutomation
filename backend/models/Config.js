@@ -23,6 +23,10 @@ const configSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    teamFormationOpen: {
+        type: Boolean,
+        default: true
+    },
     createdAt: {
         type: Date,
         default: Date.now
