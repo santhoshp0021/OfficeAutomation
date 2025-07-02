@@ -79,13 +79,6 @@ const CoordinatorDashboard = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const navLinks = [
-        { path: '/coordinator-dashboard/dashboard', label: 'Dashboard' },
-        { path: '/coordinator-dashboard/review-schedule', label: 'Review Schedule' },
-        { path: '/coordinator-dashboard/viva-schedule', label: 'Viva Schedule' },
-        { path: '/coordinator-dashboard/letters', label: 'Letters' },
-    ];
-
     useEffect(() => {
         if (location.pathname === '/coordinator-dashboard') {
             navigate('/coordinator-dashboard/dashboard', { replace: true });

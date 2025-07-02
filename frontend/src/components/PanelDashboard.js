@@ -4,7 +4,6 @@ import Navbar from './Navbar';
 import PanelAssignedTeams from './panel/PanelAssignedTeams';
 import PanelReviewSchedules from './panel/PanelReviewSchedules';
 import PanelMarking from './panel/PanelMarking';
-import RoleRulesBox from './RoleRulesBox';
 
 const PanelDashboard = () => {
     const location = useLocation();
