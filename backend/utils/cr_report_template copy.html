@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Confidential Report</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+      }
+      .header {
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+      }
+      .section-title {
+        font-weight: bold;
+        margin-top: 24px;
+      }
+      .field-label {
+        font-weight: bold;
+      }
+      .subsection {
+        margin-left: 24px;
+      }
+      .numbered {
+        font-weight: bold;
+      }
+      .row {
+        margin-bottom: 8px;
+      }
+      .signature-block {
+        margin-top: 40px;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      .table th,
+      .table td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      ANNA UNIVERSITY CHENNAI<br />
+      PERFORMANCE AND POTENTIAL ASSESSMENT<br />
+      (For Teaching staff other than Deans/Head of the Institutions)<br />
+      Part I Performance Assessment<br />
+      For the year / Half year ending December 31 / June 30,
+      <span>{{YEAR}}</span>
+    </div>
+
+    <div class="row numbered">
+      1. (a) Name (in block letters): <span>{{FACULTY_NAME}}</span>
+    </div>
+    <div class="row numbered">
+      (b) Date of Birth and Age: <span>{{DOB}}</span>
+    </div>
+    <div class="row numbered">
+      (c) Qualifications: <span>{{QUALIFICATIONS}}</span>
+    </div>
+    <div class="row numbered">2. Designation: <span>{{DESIGNATION}}</span></div>
+    <div class="row numbered">
+      3. Scale of pay and present pay: <span>{{SCALE_PAY}}</span>
+    </div>
+    <div class="row numbered">
+      4. Post or posts held and nature of appointment:
+      <span>{{POST_HELD}}</span>
+    </div>
+
+    <div class="row numbered">
+      5. Teaching effectiveness as judged from the performance of students:
+    </div>
+    <div class="subsection">
+      i) Classroom control and popularity among students:
+      <span>{{CONTROL_CLASS}}</span>
+    </div>
+    <div class="subsection">
+      ii) Involvement in student counselling and interest in student welfare:
+      <span>{{STUDENT_COUNSELING}}</span>
+    </div>
+    <div class="subsection">
+      iii) Average percentage of students who passed in the subjects taught:
+      <span>{{AVG_PASS_PERCENTAGE}}</span>
+    </div>
+
+    <div class="row numbered">
+      6. Comments on class record maintenance, thoroughness and promptness in
+      internal evaluation: <span>{{CLASS_RECORDS}}</span>
+    </div>
+    <div class="row numbered">
+      7. Contributions to institutional development (labs, guides, new courses,
+      etc.): <span>{{CONTRIBUTIONS}}</span>
+    </div>
+    <div class="row numbered">
+      8. Involvement in and ability to undertake research work:
+      <span>{{RESEARCH_ABILITY}}</span>
+    </div>
+    <div class="row numbered">
+      9. Standing in the profession (publications, recognitions, memberships,
+      etc.): <span>{{PROFESSIONAL_STANDING}}</span>
+    </div>
+    <div class="row numbered">
+      10. Extra-curricular roles and responsibilities held within the
+      institution: <span>{{EXTRA_CURRICULAR}}</span>
+    </div>
+    <div class="row numbered">
+      11. Willingness to accept responsibilities and cooperate in institutional
+      activities: <span>{{WILLINGNESS}}</span>
+    </div>
+    <div class="row numbered">
+      12. Details of any lapses or disciplinary action taken (if any):
+      <span>{{LAPSES}}</span>
+    </div>
+    <div class="row numbered">
+      13. Overall rating by the Reporting Officer:
+      <span>{{OVERALL_RATING}}</span>
+    </div>
+
+    <div class="signature-block">
+      <div>Station: <span>{{HOD_STATION}}</span></div>
+      <div>Date: <span>{{HOD_DATE}}</span></div>
+      <div>Signature: ____________________</div>
+      <div>Reporting Officer: <span>{{HOD_NAME}}</span></div>
+    </div>
+
+    <div class="signature-block">
+      <div>Signature: <span>{{FACULTY_SIGNATURE}}</span></div>
+      <div>Date: <span>{{FACULTY_SIGN_DATE}}</span></div>
+      <div>Name: <span>{{FACULTY_NAME}}</span></div>
+    </div>
+
+    <div class="section-title">Part II: Potential Assessment (HOD)</div>
+    <div class="row">
+      A. (i) Physical capacity and general demeanor (health, appearance,
+      energy): <span>{{PHYSICAL_CAPACITY}}</span>
+    </div>
+    <div class="row">
+      (ii) Stability, poise, fairness and dependability:
+      <span>{{STABILITY}}</span>
+    </div>
+    <div class="row">
+      (iii) Mental capacity (analytical skills, communication, discussion
+      skills): <span>{{MENTAL_CAPACITY}}</span>
+    </div>
+
+    <div class="row">
+      B. (i) Aptitude for work (initiative, self-reliance, thoroughness,
+      responsibility): <span>{{APTITUDE}}</span>
+    </div>
+    <div class="row">
+      (ii) Ability to manage (decision-making, planning, supervision):
+      <span>{{ABILITY_TO_MANAGE}}</span>
+    </div>
+
+    <div class="row">
+      C. (i) Ability to get along (tact, cooperation with peers, subordinates,
+      public): <span>{{GET_ALONG}}</span>
+    </div>
+    <div class="row">
+      (ii) Potential for academic leadership:
+      <span>{{ACADEMIC_LEADERSHIP}}</span>
+    </div>
+    <div class="row">
+      (iii) General appraisal (integrity, receptiveness to feedback):
+      <span>{{GENERAL_APPRAISAL}}</span>
+    </div>
+    <div class="row">
+      (iv) Special remarks or commendations if any:
+      <span>{{SPECIAL_REMARKS}}</span>
+    </div>
+
+    <div class="row">
+      D. Recommendation on fitness for regularization / confirmation /
+      promotion: <span>{{FITNESS}}</span>
+    </div>
+
+    <div class="signature-block">
+      <div>Signature of the Reporting Officer: ____________________</div>
+      <div>Name: <span>{{HOD_NAME}}</span></div>
+    </div>
+
+    <div class="section-title">Form for Self-Assessment (Faculty)</div>
+    <div class="row">(a) Designation: <span>{{DESIGNATION}}</span></div>
+    <div class="row">(b) Date of Birth and Age: <span>{{DOB}}</span></div>
+    <div class="row">(c) Pay and Scale of pay: <span>{{SCALE_PAY}}</span></div>
+    <div class="row">(d) Institution: <span>{{INSTITUTION}}</span></div>
+    <div class="row">(e) Department: <span>{{DEPARTMENT}}</span></div>
+    <div class="row">
+      Date of joining in the present post: <span>{{DATE_OF_JOINING}}</span>
+    </div>
+    <div class="row">
+      Academic Qualification: <span>{{QUALIFICATIONS}}</span>
+    </div>
+    <div class="row">Membership: <span>{{MEMBERSHIP}}</span></div>
+    <div class="row">Examination results: <span>{{EXAM_RESULTS}}</span></div>
+    <!-- Add table for subjects taught, etc. as per template -->
+
+    <!-- Add this where appropriate -->
+    <div class="section-title">Subjects Taught</div>
+    <div>{{SUBJECTS_TABLE}}</div>
+    <div class="section-title">Self-Assessment Details</div>
+    <div class="row">
+      Exam Results Summary: <span>{{SELF_EXAM_RESULTS}}</span>
+    </div>
+    <div class="row">Contributions: <span>{{SELF_CONTRIBUTIONS}}</span></div>
+
+    <div class="row">Research Supervision Count:</div>
+    <div class="subsection">PhD: <span>{{SELF_RESEARCH_PHD}}</span></div>
+    <div class="subsection">MPhil: <span>{{SELF_RESEARCH_MPHIL}}</span></div>
+    <div class="subsection">PG: <span>{{SELF_RESEARCH_PG}}</span></div>
+    <div class="subsection">UG: <span>{{SELF_RESEARCH_UG}}</span></div>
+
+    <div class="row">
+      Papers Published: <span>{{SELF_PAPERS_PUBLISHED}}</span>
+    </div>
+    <div class="row">
+      Books/Guides Written: <span>{{SELF_BOOKS_GUIDES}}</span>
+    </div>
+    <div class="row">
+      Research Instruments Used: <span>{{SELF_RESEARCH_INSTRUMENTS}}</span>
+    </div>
+    <div class="row">
+      Additional Qualifications: <span>{{SELF_ADDITIONAL_QUALIFICATIONS}}</span>
+    </div>
+    <div class="row">Consulting Work: <span>{{SELF_CONSULTING}}</span></div>
+    <div class="row">
+      Other Contributions: <span>{{SELF_OTHER_CONTRIBUTIONS}}</span>
+    </div>
+    <div class="row">
+      Pastoral Functions: <span>{{SELF_PASTORAL_FUNCTIONS}}</span>
+    </div>
+
+    <div class="section-title">Attachments</div>
+    <div>{{ATTACHMENTS}}</div>
+  </body>
+</html>

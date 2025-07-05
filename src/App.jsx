@@ -1,70 +1,89 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import BookingPage from './pages/BookingPage';
-import ProjectorListingPage from './pages/ProjectorListingPage';
-import RoomListingPage from './pages/RoomListingPage';
-import HallListingPage from './pages/HallListingPage';
-import AuditoriumRequest from './pages/AuditoriumRequest';
-import LoginPage from './pages/LoginPage';
-import Requestspage from './pages/Admin/Requestspage';
-import Messages from './pages/Messages';
-import Historypage from './pages/Admin/Historypage';
-import Dashboard from './pages/Admin/Dashboard';
-import EnrollmentPage from  './pages/Admin/EnrollmentPage';
-import TimeTable from './pages/Admin/TimeTable';
-import Facilities from './pages/Admin/Facilities';
-import Register from './pages/Admin/Register';
-import PeriodwiseBooking from './pages/PeriodwiseBooking';
-import FacilitywiseBooking from './pages/FacilitywiseBooking';
+// import { useState } from "react";
+import "./App.css";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import FacultyLogin from "./pages/Faculty/Login";
+import ODRequest from "./Features/OD/ODRequest";
+import ODHistory from "./Features/OD/ODHistory";
+import AddPublication from "./Features/Publications/AddPublication";
+import Publications from "./Features/Publications/Publications";
+import AddScholar from "./Features/Scholars/AddScholar";
+import FacultyScholars from "./Features/Scholars/Scholars";
+import { Toaster } from "react-hot-toast";
+import { UserData } from "./context/UserContext";
+import GenerateCR from "./Features/CR/GenerateCR";
+import Dashboard from "./pages/Faculty/Dashboard";
+import Signup from "./pages/Faculty/Signup";
+import ProtectedRoutes from "./ui/ProtectedRoutes";
+import AllCRReports from "./Features/CR/ViewAllReports";
+import { ConsolidationReportMenu, ConsolidationReportScholars, ConsolidationReportOD } from "./pages/Admin/ConsolidationReport";
+import ConsolidationReportFaculty from "./pages/Admin/ConsolidationReportFaculty";
+import ConsolidationReportFacultyAnalytics from "./pages/Admin/ConsolidationReportFacultyAnalytics";
+
+import FullReport from "./Features/CR/FullReport";
 function App() {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
-  }
-);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-    // localStorage.setItem('user', JSON.stringify(userData)); 
-  };
-
+  const { user } = UserData();
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/"
-          element={<LoginPage onLogin={handleLogin} />}
-        />
-        <Route
-          path="/*"
-          element={
-            user  ? (
-              <Routes>
-                <Route path="/home" element={<HomePage User={user} />} />
-                <Route path="/booking" element={<BookingPage User={user} />} />
-                <Route path="/projectorlisting" element={<ProjectorListingPage User={user}/>} />
-                <Route path="/rooms" element={<RoomListingPage User={user} />} />
-                <Route path="/halls" element={<HallListingPage User={user} />} />
-                <Route path="/auditorium" element={<AuditoriumRequest User={user} />} />
-                <Route path="/requests" element={<Requestspage User={user} />} />
-                <Route path="/messages" element={<Messages User={user} />} />
-                <Route path="/history" element={<Historypage User={user} />} />
-                <Route path="dashboard" element={<Dashboard User={user} />} />
-                <Route path="/periodwiseBooking" element={<PeriodwiseBooking User={user} />} />
-                <Route path="/facilitywiseBooking" element={<FacilitywiseBooking User={user} />} />
-                <Route path="/enrollment" element={<EnrollmentPage User={user} />} />
-                <Route path='/timetable' element={<TimeTable User={user} />} />
-                <Route path='/facilities' element={<Facilities User={user} />} />
-                <Route path='/register' element={<Register User={user} />} />
-              </Routes>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-      </Routes>
-    </Router>
+    <>
+      <BrowserRouter basename="/">
+        <Routes>
+          <Route path="/" element={<Home />}>
+            <Route path="login" element={<FacultyLogin />} />
+            <Route path="signup" element={<Signup />} />
+
+            <Route
+              element={
+                <ProtectedRoutes>
+                  <Outlet />
+                </ProtectedRoutes>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="scholars" element={<FacultyScholars />} />
+              <Route path="scholar/add" element={<AddScholar />} />
+              <Route path="OD" element={<ODHistory />} />
+              <Route path="OD/new" element={<ODRequest />} />
+              <Route path="publications" element={<Publications />} />
+              <Route path="publication/add" element={<AddPublication />} />
+              <Route path="CR" element={<GenerateCR />} />
+              <Route
+                path="/CR/fullReport/:reportId"
+                element={<FullReport user={user} />}
+              />
+                <Route path="CR/view" element={<AllCRReports />} />
+
+              <Route path="/admin/consolidation-report/menu" element={<ConsolidationReportMenu />} />
+              <Route path="/admin/consolidation-report/scholars" element={<ConsolidationReportScholars />} />
+              <Route path="/admin/consolidation-report/OD" element={<ConsolidationReportOD />} />
+              <Route path="/admin/consolidation-report/faculty/:facultyName" element={<ConsolidationReportFacultyAnalytics />} />
+              <Route path="/admin/consolidation-report/faculty" element={<ConsolidationReportFaculty />} />
+              <Route path="/admin/consolidation-report" element={<ConsolidationReportMenu />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+
+      <Toaster
+        position="top-right"
+        containerStyle={{ margin: "10px" }}
+        gutter={12}
+        toastOptions={{
+          success: {
+            duration: 3000,
+          },
+          error: {
+            duration: 5000,
+          },
+          style: {
+            fontSize: "16px",
+            maxWidth: "500px",
+            padding: "16px 24px",
+            backgroundColor: "#ffffff",
+            color: "var(--color-grey-700)",
+          },
+        }}
+      />
+    </>
   );
 }
 

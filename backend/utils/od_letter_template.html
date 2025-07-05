@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        padding: 40px;
+      }
+
+      .header {
+        position: relative;
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+      }
+
+      .header-logos {
+        position: relative;
+        height: 100px;
+        margin-bottom: 10px;
+      }
+
+      .left-logo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 80px;
+      }
+
+      .right-logo {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 80px;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .subhead {
+        font-size: 16px;
+        margin-top: 4px;
+      }
+
+      .content {
+        margin-top: 40px;
+        line-height: 1.6;
+      }
+
+      .bold {
+        font-weight: bold;
+      }
+
+      .footer {
+        margin-top: 60px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .signature {
+        text-align: center;
+        width: 32%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-logos">
+        <img src="{{LEFT_LOGO_PATH}}" class="logo left-logo" />
+        <img src="{{RIGHT_LOGO_PATH}}" class="logo right-logo" />
+      </div>
+      <div class="title">College of Engineering Guindy, Anna University</div>
+      <div class="subhead">Department of Computer Science and Engineering</div>
+      <div class="subhead">Academic Year: {{YEAR}}</div>
+    </div>
+
+    <div class="content">
+      <div>Date: <span class="bold">{{CURRENT_DATE}}</span></div>
+
+      {{FROM_SECTION}}
+
+      <p class="bold">To,</p>
+      <p>
+        {{FORWARD_TO}}<br />
+        College of Engineering Guindy, Anna University<br />
+        Chennai
+      </p>
+
+      <p class="bold">Dear Sir/Madam,</p>
+
+      <p>{{PURPOSE_PARAGRAPH}}</p>
+
+      <p>
+        I kindly request you to consider and approve the leave for the
+        above-mentioned participation.
+      </p>
+
+      <p>
+        Thanking you,<br />
+        Sincerely,<br />
+        <span class="bold">{{NAME}}</span>
+      </p>
+    </div>
+
+    <div class="footer">
+      <div class="signature">
+        <span class="bold">Faculty</span><br /><br />___________________
+      </div>
+      {{HOD_SIGNATURE}}
+      <div class="signature">
+        {{REGISTRAR_SIGNATURE}}
+      </div>
+    </div>
+  </body>
+</html>

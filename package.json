@@ -1,21 +1,32 @@
 {
-  "name": "my-facility-app",
+  "name": "dcse-3",
   "private": true,
   "version": "0.0.0",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postbuild": "npx replace-in-file '#333333\\([^)]+\\)' '#888' ./dist/assets/*.css"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.8",
     "axios": "^1.10.0",
+    "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
-    "node-schedule": "^2.1.1",
+    "jspdf-autotable": "^5.0.2",
+    "puppeteer": "^24.10.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.2"
+    "react-hook-form": "^7.57.0",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.6.2",
+    "react-signature-canvas": "^1.1.0-alpha.2",
+    "recharts": "^3.0.0",
+    "styled-components": "^6.1.18",
+    "tailwindcss": "^4.1.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
@@ -26,6 +37,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "replace-in-file": "^8.3.0",
     "vite": "^6.3.5"
   }
 }

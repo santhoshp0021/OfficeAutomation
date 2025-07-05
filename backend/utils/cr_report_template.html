@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Confidential Report</title>
+    <style>
+      @page {
+        margin: 40px;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        line-height: 1.8; /* Increased line spacing */
+      }
+
+      .header {
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 24px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin-top: 24px;
+        font-size: 16px;
+        color: #000;
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+      }
+
+      .row {
+        margin: 10px 0;
+      }
+
+      .subsection {
+        margin-left: 24px;
+      }
+
+      .signature-block {
+        margin-top: 40px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      .table th,
+      .table td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+        font-size: 14px;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      br.question-break {
+        margin-bottom: 10px;
+        display: block;
+        content: "";
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Page 1: HOD Part I -->
+    <div class="header">
+      ANNA UNIVERSITY CHENNAI<br />
+      PERFORMANCE AND POTENTIAL ASSESSMENT<br />
+      ( For Teaching Staff Other than Deans/Head of the Institution )<br />
+      Part I: Performance Assessment<br />
+      For the year/Half-year ending {{PERIOD}} {{YEAR}}
+    </div>
+
+    <div class="row">1. (a) Name (in Block letters): {{FACULTY_NAME}}</div>
+    <div class="row">1. (b) Date of Birth and Age: {{DOB}}</div>
+    <div class="row">1. (c) Qualification: {{QUALIFICATIONS}}</div>
+    <div class="row">2. Designation: {{DESIGNATION}}</div>
+    <div class="row">3. Scale of pay : {{SCALE_PAY}}</div>
+    <div class="row">
+      4. Post or posts held and nature of appointment (Le.
+      Temporary/Probationer/Approved Probationer/Permanent): {{POST_HELD}}
+    </div>
+
+    <div class="row">
+      5. Ability as a teacher as evidenced from the performance of students in
+      the subject taught by him/her: <br />
+      <div class="subsection">
+        i) Control over the class and populanty among students: <br />
+        {{CONTROL_CLASS}}
+      </div>
+      <div class="subsection">
+        ii) Students counselling and interest in student welfare: <br />
+        {{STUDENT_COUNSELING}}
+      </div>
+      <div class="subsection">
+        iii) Average percentage of pass in the subject taught by him/her: <br />
+        {{AVG_PASS_PERCENTAGE}}
+      </div>
+    </div>
+
+    <div class="row">
+      6. Comments on maintenance of class reconst thoroughness and promptness in
+      intermal evaluation: <br />
+      {{CLASS_RECORDS}}
+    </div>
+    <div class="row">
+      7. Contributions to the development of the institution based on Ability to
+      training, Planning and Building Laboratory facilities, like models and
+      demonstration equipment, preparation of guides bulletins etc, for the use
+      of students, designing new courses of study and improving the existing
+      ones, and all contributions that promote efficiency and progress in
+      instruction and training: <br />
+      {{CONTRIBUTIONS}}
+    </div>
+    <div class="row">
+      8. Interest in and ability for research (basic and or applied). The area
+      of research may include Science, Engineering or Humanities pertinent to
+      the curriculum. teaching methods and techniques, and other educational
+      problems, human relations in so far as they involve student discipline,
+      team work, co operation and administration Credit may also be given for
+      development of instruments and fabrication of equipment of note and worthy
+      character. List of papers published if any, during the period of report:
+      <br />
+      {{RESEARCH_ABILITY}}
+    </div>
+
+    <div class="row">
+      9. Professional standing, academic qualification, authorship of books,
+      consulting practice, membership of professional bodies, committees and
+      participation in their activities, upto date knowledge and proficiency in
+      the subjects handled: <br />
+      {{PROFESSIONAL_STANDING}}
+    </div>
+    <div class="row">
+      10. Extra-curricular responsibilities held: <br />
+      {{EXTRA_CURRICULAR}}
+    </div>
+    <div class="row">
+      11. Willingness to accept such work and co-operate with the
+      administration: <br />
+      {{WILLINGNESS}}
+    </div>
+    <div class="row">
+      12. Lapses pointed out/punishment awarded during the period under report:
+      <br />
+      {{LAPSES}}
+    </div>
+    <div class="row">
+      13. Reporting officer's overall rating of the officer reported.on: <br />
+      {{OVERALL_RATING}}
+    </div>
+
+    <table class="table" style="margin-top: 40px">
+      <tr>
+        <th>Reporting Officer (HOD)</th>
+        <th>Reviewing Officer</th>
+        <th>Faculty</th>
+      </tr>
+      <tr>
+        <td>
+          Signature: __________________<br />
+          Name: {{PERF_HOD_NAME}}<br />
+          Date: {{PERF_HOD_DATE}}
+        </td>
+        <td>
+          Signature: __________________<br />
+          Name: <br />
+          Date:
+        </td>
+        <td>
+          Signature: __________________<br />
+          Name: {{PERF_FACULTY_NAME}}<br />
+          Date: {{PERF_FACULTY_DATE}}
+        </td>
+      </tr>
+    </table>
+
+    <div class="row">
+      Note: This response is to be based on the maintenance of attendance
+      register, record of class work etc.. maintained by the faculty member.<br />The
+      overall rating should be on the five point scale namely, (i) Outstanding
+      (ii) Very Good (iii) Good (iv) Satisfactory (v) Poor.
+    </div>
+
+    <!-- Page 3: Faculty Self-Assessment Header -->
+    <div class="page-break"></div>
+    <div class="header">Part II: POTENTIAL ASSESSMENT</div>
+    <div class="row">Name of the Officer : {{POT_HOD_NAME}}</div>
+    <div class="row">Designation: {{DESIGNATION}}</div>
+    <div class="header">
+      Report for the year/Half-year ending {{PERIOD}} {{YEAR}}
+    </div>
+
+    <div class="row">
+      A(i). Physical Capacity and general demeanour: <br />
+      {{PHYSICAL_CAPACITY}}
+    </div>
+    <div class="row">
+      A(ii). Stability, Poise, Faimess, Dependability: <br />
+      {{STABILITY}}
+    </div>
+    <div class="row">
+      A(iii). Mental Capacity <br />Analytical ability, power of expression,
+      ability to participate in discussions: <br />
+      {{MENTAL_CAPACITY}}
+    </div>
+    <div class="row">
+      B(i). Aptitude for work <br />Aptitude, initiative, self-cellance,
+      thoroughness, punctuality, sense of responsibility: <br />
+      {{APTITUDE}}
+    </div>
+    <div class="row">
+      B(ii). Ability to manage <br />Capacity to take decisions, ability to plan
+      and programme, supervise and guide and control: <br />
+      {{ABILITY_TO_MANAGE}}
+    </div>
+    <div class="row">
+      C(i). Ability to get along<br />Tact, helpfulness to fellow official,
+      subordinates and to the public : <br />
+      {{GET_ALONG}}
+    </div>
+    <div class="row">
+      C(ii). Potential for Academic leadership: <br />
+      {{ACADEMIC_LEADERSHIP}}
+    </div>
+    <div class="row">
+      C(iii). General appraisal of the officers good and bad qualities in a
+      narrative form, particularly those pertaining to his/her integrity and
+      ability to correct himself/herself, if his faults are pointed out : <br />
+      {{GENERAL_APPRAISAL}}
+    </div>
+    <div class="row">
+      C(iv). Special remarks if any: <br />
+      {{SPECIAL_REMARKS}}
+    </div>
+    <div class="row">
+      D. Fitness for regularization/Declaration of completion of
+      probation/confirmation /promotion: <br />
+      {{FITNESS}}
+    </div>
+
+    <table class="table" style="margin-top: 40px">
+      <tr>
+        <th>Reporting Officer (HOD)</th>
+        <th>Faculty</th>
+      </tr>
+      <tr>
+        <td>
+          Signature: __________________<br />
+          Name: {{POT_HOD_NAME}}<br />
+          Date: {{POT_HOD_DATE}}
+        </td>
+        <td>
+          Signature: __________________<br />
+          Name: {{POT_FACULTY_NAME}}<br />
+          Date: {{POT_FACULTY_DATE}}
+        </td>
+      </tr>
+    </table>
+
+    <!-- Page 4: Subjects + Self Assessment -->
+    <div class="page-break"></div>
+    <div class="header">FORM FOR SELF ASSESSMENT</div>
+    <div class="row">Dr./Thiru/Tmt./Ms: {{FACULTY_NAME}}</div>
+    <div class="row">For the period ending {{PERIOD}} {{YEAR}}</div>
+
+    <div class="row">(a) Designation: {{DESIGNATION}}</div>
+    <div class="row">(b) Date of Birth and Age: {{DOB}}</div>
+    <div class="row">(c) Pay and Scale of Pay: {{SCALE_PAY}}</div>
+    <div class="row">
+      (d) Institution: College of Engineering Guindy,Anna University
+    </div>
+    <div class="row">(e) Department: {{DEPARTMENT}}</div>
+    <div class="row">
+      Date of joining in the present post: {{DATE_OF_JOINING}}
+    </div>
+    <div class="row">
+      Academic Qualification: <br />
+      {{QUALIFICATIONS}}
+    </div>
+    <div class="row">
+      Membership: <br />
+      {{MEMBERSHIPS}}
+    </div>
+
+    <div class="section-title">Examination Results</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Contact Hours</th>
+          <th>Students Appeared</th>
+          <th>Students Passed</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{SUBJECTS_ROWS}}
+      </tbody>
+    </table>
+    <div class="row">
+      (b) Any other information to item 5, Part I of the report. Mention may be
+      made of officer's contact hours : <br />
+      {{EXAM_RESULTS}}
+    </div>
+
+    <div class="section-title">
+      6. State contributions made by you in one or more of the following, during
+      the period under report
+    </div>
+    <div class="row">
+      i)Laboratory or workshop development: <br />
+      {{LAB_DEVELOPMENT}}
+    </div>
+    <div class="row">
+      ii) Preparation of models, demonstration equipment and other teaching
+      aids. : <br />
+      {{MODELS_AND_AIDS}}
+    </div>
+    <div class="row">
+      iii) Short Courses Conducted: <br />
+      {{SHORT_COURSES}}
+    </div>
+
+    <div class="row">
+      (a) No. of students who have obtained research degrees under the guidance
+      of the staff member :<br />
+      (i) Ph.D : {{Q_PHD}}<br />
+      (ii) P.G. degree : {{Q_PG}}<br />
+      (iii) M.Phil : {{Q_MPHIL}}
+    </div>
+    <div class="row">
+      (b) Number registered for research under the guidance of the staff member
+      for the period under review. : <br />
+      (i) Ph.D :{{R_PHD}}<br />
+      (ii) P.G. degree : {{R_PG}}<br />
+      (ii) P.G. Diploma : {{R_PGD}}<br />
+      (iv) Undergraduate (Project work) : {{R_UG}}
+    </div>
+
+    <div class="row">
+      (c) Papers published (attach reprints if available) for the period under
+      review : <br />
+      {{PAPERS_PUBLISHED}}
+    </div>
+    <div class="row">
+      (d) Research instrumentation/apparatus innovated (attach photographs)
+      during the period under review : <br />
+      {{RESEARCH_INSTRUMENTS}}
+    </div>
+    <div class="row">
+      8. (a) Any additional qualification acquired during the period under
+      report, give details : <br />
+      {{ADDITIONAL_QUALIFICATIONS}}
+    </div>
+    <div class="row">
+      (b) Have you published or are you engaged in writing any book or guide,
+      during the period under report; if so, give details : <br />
+      {{BOOKS_GUIDES}}
+    </div>
+    <div class="row">
+      (c) State membership committees connected with your professional work
+      during the period under report: <br />
+      {{MEMBERSHIPS}}
+    </div>
+    <div class="row">
+      (d) State conference or seminars in which you have participated during the
+      period under report; give details of the nature of the participation.:
+      <br />
+      {{CONFERENCES}}
+    </div>
+    <div class="row">
+      (e) Are you engaged in any consulting work? If so give particulars: <br />
+      {{CONSULTING_WORK}}
+    </div>
+    <div class="row">
+      (f) Any other contribution not covered in items (a) to (e) of this item :
+      <br />
+      {{OTHER_CONTRIBUTIONS}}
+    </div>
+    <div class="row">
+      9. Pastoral functions such as wardenship, NCC/NSS, Sports, fine-arts,
+      students activities etc, during the period under report : <br />
+      {{PASTORAL_FUNCTIONS}}
+    </div>
+
+    <table class="table" style="margin-top: 40px">
+      <tr>
+        <th>Faculty Signature</th>
+      </tr>
+      <tr>
+        <td>
+          Signature: __________________<br />
+          Name: {{FACULTY_NAME}}<br />
+          Date: {{FACULTY_SIGN_DATE}}
+        </td>
+      </tr>
+    </table>
+
+    <!-- Attachments (optional enclosures section) -->
+    <div class="page-break"></div>
+    <h2>Enclosures</h2>
+    {{ENCLOSURE_OBJECTS}}
+  </body>
+</html>

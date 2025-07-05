@@ -1,4 +1,4 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -39,4 +39,159 @@
 
 .read-the-docs {
   color: #888;
+} */
+
+/* PDF Export color override to avoid #333333 color issues */
+.pdf-export,
+.pdf-export * {
+  color: #000 !important;
+  background: #fff !important;
+}
+
+/* PDF Export content wrapper for A4 fit and centering */
+.pdf-export-content {
+  max-width: 730px;
+  margin: 0 auto;
+  overflow-wrap: break-word;
+}
+
+/* PDF Export Font and Section Styling for compact, professional look */
+.pdf-sample-font {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 11px !important;
+}
+
+/* PDF Export Title Section always at the top, centered */
+.pdf-title-section {
+  width: 100%;
+  text-align: center;
+  margin: 0 auto 8px auto;
+  font-size: 1.1em;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.pdf-title-section > div {
+  margin: 0;
+  padding: 0;
+}
+.pdf-title-divider {
+  border: none;
+  border-top: 1.2px solid #222;
+  margin: 8px 0 10px 0;
+}
+
+/* PDF Basic Info Table for compactness */
+.pdf-basic-info-table {
+  width: 100%;
+  font-size: 11px;
+  border: none;
+  margin: 0 0 4px 0;
+  border-collapse: collapse;
+}
+.pdf-basic-info-table td {
+  padding: 2px 6px;
+  border: none;
+  vertical-align: top;
+}
+.pdf-basic-info-label {
+  font-weight: 600;
+  text-align: right;
+  width: 160px;
+  padding-right: 8px;
+}
+.pdf-basic-info-table td + td {
+  font-weight: 400;
+  text-align: left;
+}
+
+/* Section heading styling */
+.pdf-section-heading {
+  font-weight: 600;
+  text-align: left;
+  margin: 8px 0 2px 0;
+  font-size: 1em;
+  padding: 0;
+}
+
+/* Remove extra margin/padding from all elements */
+.pdf-export-content,
+.pdf-export-content * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Compact definition list for Basic Info */
+.pdf-basic-info-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+.pdf-basic-info-list dt {
+  font-weight: 600;
+  margin-right: 4px;
+  margin-left: 0;
+  display: inline-block;
+}
+.pdf-basic-info-list dd {
+  margin: 0 12px 0 0;
+  display: inline-block;
+}
+
+.pdf-section-subheading {
+  font-weight: 600;
+  text-align: left;
+  margin: 8px 0 2px 0;
+  font-size: 1em;
+  padding: 0;
+}
+.pdf-no-data {
+  color: #111;
+  font-size: 1em;
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+
+/* PDF Export Table Styling for compactness */
+.pdf-export table {
+  font-size: 11px !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin-bottom: 8px !important;
+  margin-top: 0 !important;
+}
+.pdf-export th,
+.pdf-export td {
+  padding: 2px 6px !important;
+  border: 1px solid #222 !important;
+  text-align: left;
+  font-weight: 400;
+}
+.pdf-export th {
+  font-weight: 600 !important;
+  background: none !important;
+}
+
+/* Remove extra backgrounds, shadows, and border-radius from sections */
+.pdf-export section {
+  margin-bottom: 8px !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: none !important;
+}
+
+.pdf-export ul,
+.pdf-export ol {
+  margin: 0 0 0 16px !important;
+  padding: 0 !important;
+}
+
+.pdf-export h1,
+.pdf-export h2,
+.pdf-export h3 {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 1em !important;
+  font-weight: 600 !important;
 }
