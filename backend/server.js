@@ -1,11 +1,18 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
 
 const app = express();
 
-// Connect to database
-connectDB();
+// Only connect to database if MONGO_URI is provided
+if (process.env.MONGO_URI) {
+    const connectDB = require('./config/db');
+    connectDB();
+} else {
+    console.log('MONGO_URI not provided, running without database connection');
+}
 
 // Middleware
 app.use(cors({
@@ -28,6 +35,7 @@ const panelRoutes = require('./routes/panel');
 const panelAssignmentRoutes = require('./routes/panelAssignment');
 const guideRoutes = require('./routes/guide');
 const studentRoutes = require('./routes/student');
+const documentRoutes = require('./routes/document');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -36,6 +44,7 @@ app.use('/api/panels', panelRoutes);
 app.use('/api/panel-assignments', panelAssignmentRoutes);
 app.use('/api/guide', guideRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api', documentRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
@@ -46,4 +55,4 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-}); 
+});

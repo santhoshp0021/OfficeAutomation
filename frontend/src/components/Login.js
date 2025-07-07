@@ -34,6 +34,7 @@ const Login = () => {
             const res = await axios.post('http://localhost:5000/api/auth/login', payload);
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', JSON.stringify(res.data.user));
+            
             // If faculty, redirect to FacultyDashboard for role/team selection
             if (formData.role === 'faculty') {
                 const facultyRoles = res.data.user.roles?.filter(r => ['guide','panel','coordinator'].includes(r.role));
@@ -47,6 +48,7 @@ const Login = () => {
                     return;
                 }
             }
+            
             // Navigate based on the selected role
             if (formData.role === 'coordinator') {
                 navigate('/coordinator-dashboard/review-schedule');

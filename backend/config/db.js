@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
-const path = require('path');
 
-// Load env vars from root .env file
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+// Load env vars from current directory's .env file
+require('dotenv').config();
 
 const connectDB = async () => {
     try {
@@ -14,7 +13,11 @@ const connectDB = async () => {
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error('MongoDB Connection Error:', error.message);
-        console.error('Connection String:', process.env.MONGO_URI.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
+        if (process.env.MONGO_URI) {
+            console.error('Connection String:', process.env.MONGO_URI.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
+        } else {
+            console.error('MONGO_URI environment variable is not set');
+        }
         process.exit(1);
     }
 };
