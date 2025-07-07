@@ -57,7 +57,6 @@
 - **Dashboard:** View your assigned courses and batches.
 - **Performance Analytics:** See feedback analytics, yearly performance charts, and question-wise ratings.
 - **Download Reports:** Export feedback/performance as PDF.
-- **Notifications:** Receive updates from admin.
 
 ### Admin
 
@@ -65,8 +64,8 @@
 - **Dashboard:** Overview of all students, faculty, courses, feedback, and grievances.
 - **Manage Users:** Add/edit/delete students and faculty.
 - **Assign Courses:** Assign faculty to courses and manage electives.
-- **View Analytics:** Access all feedback and grievance analytics, including charts and reports.
-- **Notifications:** Send notifications to students and faculty.
+- **View Analytics:** Access all feedback and grievance analytics, including stats and charts.
+- **Notifications:** Send notifications to students.
 
 ---
 
@@ -88,7 +87,7 @@ All endpoints require authentication via JWT (token is stored in localStorage an
 - **MongoDB Connection:** Ensure your MongoDB URI is correct and the database is running.
 - **CORS Issues:** The backend uses CORS middleware; if you encounter CORS errors, check your frontend and backend URLs.
 - **Port Conflicts:** Make sure ports 3000 (frontend) and 5000 (backend) are free or update them in your `.env` and React proxy settings.
-- **Password Issues:** Use the "Forgot Password" or "Password Hint" feature on the login page for help.
+- **Password Issues:** Use the "Password Hint" feature on the login page or contact for help.
 
 ---
 
