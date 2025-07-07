@@ -91,7 +91,7 @@ const SessionView = () => {
               className="text-center mb-8"
             >
               <h1 className="text-3xl font-bold mb-2 tracking-wide text-slate-900">
-                📅 Session Timetable
+                 Session Timetable
               </h1>
               <p className="text-slate-900 text-lg">
                 Upload and manage examination timetables

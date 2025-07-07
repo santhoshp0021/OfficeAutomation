@@ -27,15 +27,15 @@ const RoleSelect = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 transition-all duration-500">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-10 flex flex-col items-center animate-fade-in-up">
+        <h1 className="text-3xl font-extrabold text-blue-900 mb-8 tracking-tight text-center drop-shadow">Login</h1>
+        <form onSubmit={handleLogin} className="w-full space-y-6">
           <div>
             <label className="block text-gray-700 font-semibold mb-1">User ID</label>
             <input
               type="text"
-              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent"
+              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent transition-all duration-200"
               value={userId}
               onChange={e => setUserId(e.target.value)}
               required
@@ -46,7 +46,7 @@ const RoleSelect = () => {
             <label className="block text-gray-700 font-semibold mb-1">Password</label>
             <input
               type="password"
-              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent"
+              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent transition-all duration-200"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -55,7 +55,7 @@ const RoleSelect = () => {
           <div>
             <label className="block text-gray-700 font-semibold mb-1">Role</label>
             <select
-              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent"
+              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 px-2 bg-transparent transition-all duration-200"
               value={role}
               onChange={e => setRole(e.target.value)}
               required
@@ -66,14 +66,22 @@ const RoleSelect = () => {
               <option value="hod">HOD</option>
             </select>
           </div>
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+          {error && <div className="text-red-500 text-sm text-center animate-pulse">{error}</div>}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors font-semibold"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold text-lg tracking-wide mt-2"
           >
             Login
           </button>
         </form>
+      </div>
+      <div className="w-full flex justify-center mt-8">
+        <a
+          href="/about"
+          className="text-blue-700 font-semibold underline hover:text-purple-700 transition-all duration-200 text-base tracking-wide hover:scale-110"
+        >
+          About Us
+        </a>
       </div>
     </div>
   );

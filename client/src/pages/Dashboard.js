@@ -15,14 +15,14 @@ import {
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: <span className="mr-2">🏠</span> },
-  { path: '/sessions', label: 'Sessions', icon: <Calendar className="w-4 h-4 mr-2" /> },
-  { path: '/student-input', label: 'Student Input', icon: <Users className="w-4 h-4 mr-2" /> },
-  { path: '/assign-qpsetter', label: 'Assign QP Setter', icon: <UserPlus className="w-4 h-4 mr-2" /> },
-  { path: '/dashboard/seating-arrangement', label: 'Seating Arrangement', icon: <ClipboardList className="w-4 h-4 mr-2" /> },
-  { path: '/duties', label: 'Duties', icon: <FileText className="w-4 h-4 mr-2" /> },
-  { path: '/claims', label: 'Claims', icon: <DollarSign className="w-4 h-4 mr-2" /> },
-  { path: '/letters', label: 'Letters', icon: <LettersIcon className="w-4 h-4 mr-2" /> },
-  { path: '/logout', label: 'Logout', icon: <LogOut className="w-4 h-4 mr-2" /> },
+  { path: '/sessions', label: 'Sessions', icon: <span className="mr-2">📅</span> },
+  { path: '/student-input', label: 'Student Input', icon: <span className="mr-2">👨‍🎓</span> },
+  { path: '/assign-qpsetter', label: 'Assign QP Setter', icon: <span className="mr-2">📝</span> },
+  { path: '/dashboard/seating-arrangement', label: 'Seating Arrangement', icon: <span className="mr-2">🪑</span> },
+  { path: '/duties', label: 'Duties', icon: <span className="mr-2">📋</span> },
+  { path: '/claims', label: 'Claims', icon: <span className="mr-2">💰</span> },
+  { path: '/letters', label: 'Letters', icon: <span className="mr-2">✉️</span> },
+  { path: '/logout', label: 'Logout', icon: <span className="mr-2">🚪</span> },
 ];
 
 const Dashboard = () => {

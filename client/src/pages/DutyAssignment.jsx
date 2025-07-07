@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/layouts/PageLayout';
+import { motion } from 'framer-motion';
 
 const DutyAssignment = () => {
     const [dateSessions, setDateSessions] = useState([]);
@@ -236,7 +237,12 @@ const DutyAssignment = () => {
     return (
         <Sidebar menuItems={menuItems} theme="bg-white text-gray-900" activeClass="bg-blue-100 text-blue-700">
             <div className="max-w-6xl mx-auto p-6">
-                <div className="bg-white shadow-xl rounded-2xl p-6 mb-8 transition-all duration-500 hover:shadow-2xl">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="bg-white shadow-xl rounded-2xl p-6 mb-8 transition-all duration-500 hover:shadow-2xl"
+                >
                     <h1 className="text-3xl font-bold mb-6">Duty Assignment</h1>
 
                     {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
@@ -279,7 +285,11 @@ const DutyAssignment = () => {
                     {isLoading && <p>Loading...</p>}
 
                     {assignedFaculties.length > 0 && (
-                        <div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 24 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15, duration: 0.5, ease: 'easeOut' }}
+                        >
                             <h2 className="text-xl font-semibold mb-2">Proposed Duty Assignments</h2>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
@@ -342,10 +352,15 @@ const DutyAssignment = () => {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
-                    <div className="mt-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' }}
+                        className="mt-8"
+                    >
                         <h2 className="text-xl font-semibold mb-2">All Assigned Duties</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
@@ -392,8 +407,8 @@ const DutyAssignment = () => {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </div>
         </Sidebar>
     );

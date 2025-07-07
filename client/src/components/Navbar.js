@@ -22,6 +22,7 @@ const Navbar = () => {
     { path: '/duties', label: 'Duties', icon: FileText },
     { path: '/letters', label: 'Letters', icon: FileText },
     { path: '/claims', label: 'Claims', icon: DollarSign },
+    { path: '/about', label: 'About Us', icon: null },
   ];
 
   return (
@@ -47,7 +48,7 @@ const Navbar = () => {
                     to={item.path}
                     className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:text-blue-700 hover:bg-gray-100'}`}
                   >
-                    <Icon className="w-5 h-5" />
+                    {Icon && <Icon className="w-5 h-5" />}
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -96,7 +97,7 @@ const Navbar = () => {
                 to={item.path}
                 className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:text-blue-700 hover:bg-gray-100'} mx-2`}
               >
-                <Icon className="w-5 h-5" />
+                {Icon && <Icon className="w-5 h-5" />}
                 <span>{item.label}</span>
               </Link>
             );

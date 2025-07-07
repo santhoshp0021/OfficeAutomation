@@ -29,6 +29,7 @@ import AssignQPSetterTopLevel from './pages/assign-qpsetter';
 import DutyAssignment from './pages/DutyAssignment';
 import AnswerSheetRequest from './pages/AnswerSheetRequest';
 import SettlementAllPages from './pages/SettlementAllPages';
+import AboutPage from './pages/AboutPage';
 
 // Create a wrapper component to handle role-based routing
 const AppContent = () => {
@@ -58,6 +59,7 @@ const AppContent = () => {
     '/dashboard', '/sessions', '/student-input', '/assign-qpsetter', '/dashboard/seating-arrangement', '/duties', '/claims', '/letters', '/users', '/settlement-all-pages'
   ];
   const showNavbar = location.pathname !== '/' &&
+    location.pathname !== '/about' &&
     !location.pathname.startsWith('/faculty') &&
     !location.pathname.startsWith('/hod') &&
     !dashboardPaths.includes(location.pathname);
@@ -71,6 +73,7 @@ const AppContent = () => {
           
           {/* Main Dashboard Route */}
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/about" element={<AboutPage />} />
           
           {/* HOD Routes */}
           <Route path="/hod" element={<HODLayout />}>
