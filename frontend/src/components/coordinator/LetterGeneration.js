@@ -28,21 +28,20 @@ const LetterGeneration = () => {
         coordinator: null,
         supervisor: null,
         external_examiner: null,
-        admin: null
+        admin: null,
+        chief_superintendent: null,
+        head_of_department: null,
+        chairman: null,
+        project_coordinator: null
     });
     const [includeSignature, setIncludeSignature] = useState(true);
+    
+    // Template requirements state
+    const [templateRequirements, setTemplateRequirements] = useState({});
+    const [availableRoles, setAvailableRoles] = useState([]);
 
-    // State for the simple form fields
-    const [formData, setFormData] = useState({
-        passed_for_rs: '',
-        passed_for_words: '',
-        tds_amount_rs: '',
-        tds_amount_words: '',
-        bank_name: '',
-        account_no: '',
-        ifsc_code: '',
-        pan_no: ''
-    });
+    // Dynamic form data based on selected template
+    const [formData, setFormData] = useState({});
 
     // State for the table data, initialized with one empty row
     const [tableData, setTableData] = useState([
@@ -214,9 +213,115 @@ const LetterGeneration = () => {
         }
     };
 
-    // Load signatures on component mount
+    const loadTemplateRequirements = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/signature-roles');
+            if (response.data.templateRequirements) {
+                setTemplateRequirements(response.data.templateRequirements);
+            }
+            if (response.data.availableRoles) {
+                setAvailableRoles(response.data.availableRoles);
+            }
+        } catch (error) {
+            console.error('Error loading template requirements:', error);
+        }
+    };
+
+    // Get template name from path for requirements lookup
+    const getTemplateName = (templatePath) => {
+        if (templatePath.startsWith('/templates/')) {
+            return templatePath.replace('/templates/', '');
+        }
+        return templatePath.split('/').pop() || templatePath.split('\\').pop() || templatePath;
+    };
+
+    // Get current template requirements
+    const getCurrentTemplateRequirements = () => {
+        if (!selectedTemplate) return null;
+        const templateName = getTemplateName(selectedTemplate.path);
+        return templateRequirements[templateName] || null;
+    };
+
+    // Handle template selection and initialize form data
+    const handleTemplateSelection = (template) => {
+        setSelectedTemplate(template);
+        
+        // Initialize form data based on template requirements
+        const templateName = getTemplateName(template.path);
+        const requirements = templateRequirements[templateName];
+        
+        if (requirements && requirements.requiredFields) {
+            const initialFormData = {};
+            requirements.requiredFields.forEach(field => {
+                initialFormData[field] = '';
+            });
+            setFormData(initialFormData);
+        } else {
+            // Fallback for unknown templates
+            setFormData({});
+        }
+    };
+
+    // Render dynamic form fields based on template requirements
+    const renderDynamicFields = () => {
+        const requirements = getCurrentTemplateRequirements();
+        if (!requirements) return null;
+
+        const fields = requirements.requiredFields || [];
+        
+        // Check if this template uses table data
+        const hasTableData = fields.some(field => 
+            ['sl_no', 'course', 'subject_code', 'candidates', 'date_session', 'bank_name', 'account_no', 'ifsc_code', 'pan_no', 'claimed_amount', 'tds', 'net_amount'].includes(field)
+        );
+
+        // If template has table data, don't show additional form fields
+        if (hasTableData) {
+            return (
+                <div className="p-4 bg-green-50 border border-green-200 rounded">
+                    <p className="text-green-800">✓ This template uses the table above for data entry. You can add multiple rows as needed.</p>
+                </div>
+            );
+        }
+
+        // For non-table templates, show the dynamic fields
+        if (fields.length === 0) {
+            return (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-blue-800">✓ This template does not require any additional fields.</p>
+                </div>
+            );
+        }
+
+        // Create human-readable labels for fields
+        const getFieldLabel = (field) => {
+            return field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        };
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {fields.map(field => (
+                    <div key={field}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {getFieldLabel(field)}:
+                        </label>
+                        <input
+                            type="text"
+                            name={field}
+                            value={formData[field] || ''}
+                            onChange={handleFormInputChange}
+                            placeholder={`Enter ${getFieldLabel(field).toLowerCase()}`}
+                            className="w-full p-2 border rounded"
+                        />
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // Load signatures and template requirements on component mount
     React.useEffect(() => {
         loadSignatures();
+        loadTemplateRequirements();
     }, []);
 
     return (
@@ -229,69 +334,103 @@ const LetterGeneration = () => {
                     {templates.map(template => (
                         <button
                             key={template.path}
-                            onClick={() => setSelectedTemplate(template)}
+                            onClick={() => handleTemplateSelection(template)}
                             className={`px-4 py-2 rounded-md ${selectedTemplate?.path === template.path ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
                         >
                             {template.name}
                         </button>
                     ))}
                 </div>
+                
+                {selectedTemplate && (
+                    <div className="mt-4 p-4 bg-gray-50 border rounded">
+                        <h4 className="font-medium mb-2">Selected Template: {selectedTemplate.name}</h4>
+                        {getCurrentTemplateRequirements() && (
+                            <p className="text-sm text-gray-600">
+                                {getCurrentTemplateRequirements().description}
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             {selectedTemplate && (
                 <div>
-                    <h3 className="text-lg font-semibold mb-4">2. Fill in Table Details</h3>
-                    <div className="overflow-x-auto mb-6">
-                        <table className="min-w-full bg-white border">
-                            <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="py-2 px-4 border">Sl.No</th>
-                                    <th className="py-2 px-4 border">Course</th>
-                                    <th className="py-2 px-4 border">Subject Code</th>
-                                    <th className="py-2 px-4 border">Candidates</th>
-                                    <th className="py-2 px-4 border">Date & Session</th>
-                                    <th className="py-2 px-4 border">Bank and Branch Name</th>
-                                    <th className="py-2 px-4 border">Account No</th>
-                                    <th className="py-2 px-4 border">IFSC Code</th>
-                                    <th className="py-2 px-4 border">PAN No.</th>
-                                    <th className="py-2 px-4 border">Claimed Amount</th>
-                                    <th className="py-2 px-4 border">TDS @ 10%</th>
-                                    <th className="py-2 px-4 border">Net Amount</th>
-                                    <th className="py-2 px-4 border">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tableData.map((row, index) => (
-                                    <tr key={index}>
-                                        <td className="border px-4 py-2">{row.sl_no}</td>
-                                        <td className="border px-4 py-2"><input type="text" name="course" value={row.course} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="subject_code" value={row.subject_code} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="candidates" value={row.candidates} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="date_session" value={row.date_session} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="bank_name" value={row.bank_name} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="account_no" value={row.account_no} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="ifsc_code" value={row.ifsc_code} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="pan_no" value={row.pan_no} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="claimed_amount" value={row.claimed_amount} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="tds" value={row.tds} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><input type="text" name="net_amount" value={row.net_amount} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
-                                        <td className="border px-4 py-2"><button onClick={() => removeTableRow(index)} className="text-red-500">Remove</button></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button onClick={addTableRow} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Row</button>
-                    </div>
+                    {/* Show table only for templates that need table data */}
+                    {getCurrentTemplateRequirements() && getCurrentTemplateRequirements().requiredFields && 
+                     getCurrentTemplateRequirements().requiredFields.some(field => 
+                         ['sl_no', 'course', 'subject_code', 'candidates', 'date_session', 'bank_name', 'account_no', 'ifsc_code', 'pan_no', 'claimed_amount', 'tds', 'net_amount'].includes(field)
+                     ) && (
+                        <>
+                            <h3 className="text-lg font-semibold mb-4">2. Fill in Table Details</h3>
+                            <div className="overflow-x-auto mb-6">
+                                <table className="min-w-full bg-white border">
+                                    <thead>
+                                        <tr className="bg-gray-100">
+                                            <th className="py-2 px-4 border">Sl.No</th>
+                                            <th className="py-2 px-4 border">Course</th>
+                                            <th className="py-2 px-4 border">Subject Code</th>
+                                            <th className="py-2 px-4 border">Candidates</th>
+                                            <th className="py-2 px-4 border">Date & Session</th>
+                                            <th className="py-2 px-4 border">Bank and Branch Name</th>
+                                            <th className="py-2 px-4 border">Account No</th>
+                                            <th className="py-2 px-4 border">IFSC Code</th>
+                                            <th className="py-2 px-4 border">PAN No.</th>
+                                            <th className="py-2 px-4 border">Claimed Amount</th>
+                                            <th className="py-2 px-4 border">TDS @ 10%</th>
+                                            <th className="py-2 px-4 border">Net Amount</th>
+                                            <th className="py-2 px-4 border">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {tableData.map((row, index) => (
+                                            <tr key={index}>
+                                                <td className="border px-4 py-2">{row.sl_no}</td>
+                                                <td className="border px-4 py-2"><input type="text" name="course" value={row.course} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="subject_code" value={row.subject_code} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="candidates" value={row.candidates} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="date_session" value={row.date_session} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="bank_name" value={row.bank_name} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="account_no" value={row.account_no} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="ifsc_code" value={row.ifsc_code} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="pan_no" value={row.pan_no} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="claimed_amount" value={row.claimed_amount} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="tds" value={row.tds} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><input type="text" name="net_amount" value={row.net_amount} onChange={(e) => handleTableInputChange(index, e)} className="w-full p-1 border rounded" /></td>
+                                                <td className="border px-4 py-2"><button onClick={() => removeTableRow(index)} className="text-red-500">Remove</button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <button onClick={addTableRow} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Row</button>
+                                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Note:</strong> All required data for this template can be entered in the table above. Add as many rows as needed for multiple entries.
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
-                    <h3 className="text-lg font-semibold mb-4">3. Fill in Other Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <input type="text" name="passed_for_rs" value={formData.passed_for_rs} onChange={handleFormInputChange} placeholder="Passed for (Amount in Rs.)" className="p-2 border rounded" />
-                        <input type="text" name="passed_for_words" value={formData.passed_for_words} onChange={handleFormInputChange} placeholder="Passed for (Amount in words)" className="p-2 border rounded" />
-                        <input type="text" name="tds_amount_rs" value={formData.tds_amount_rs} onChange={handleFormInputChange} placeholder="TDS Amount (in Rs.)" className="p-2 border rounded" />
-                        <input type="text" name="tds_amount_words" value={formData.tds_amount_words} onChange={handleFormInputChange} placeholder="TDS Amount (in words)" className="p-2 border rounded" />
-                    </div>
+                    {/* Show required fields section only for non-table templates or templates without table data */}
+                    {getCurrentTemplateRequirements() && (
+                        getCurrentTemplateRequirements().requiredFields && 
+                        !getCurrentTemplateRequirements().requiredFields.some(field => 
+                            ['sl_no', 'course', 'subject_code', 'candidates', 'date_session', 'bank_name', 'account_no', 'ifsc_code', 'pan_no', 'claimed_amount', 'tds', 'net_amount'].includes(field)
+                        )
+                    ) && (
+                        <>
+                            <h3 className="text-lg font-semibold mb-4">2. Fill in Required Fields</h3>
+                            {renderDynamicFields()}
+                        </>
+                    )}
 
-                    <h3 className="text-lg font-semibold mb-4">4. Signature Settings</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                        {getCurrentTemplateRequirements() && getCurrentTemplateRequirements().requiredFields && 
+                         getCurrentTemplateRequirements().requiredFields.some(field => 
+                             ['sl_no', 'course', 'subject_code', 'candidates', 'date_session', 'bank_name', 'account_no', 'ifsc_code', 'pan_no', 'claimed_amount', 'tds', 'net_amount'].includes(field)
+                         ) ? '3. Signature Settings' : '3. Signature Settings'}
+                    </h3>
                     <div className="mb-6">
                         <div className="flex items-center gap-4 mb-4">
                             <label className="flex items-center">
@@ -305,36 +444,73 @@ const LetterGeneration = () => {
                             </label>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(signatures).map(([role, signatureData]) => (
-                                <div key={role} className="p-3 border rounded">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium capitalize">
-                                            {role.replace('_', ' ')}:
-                                        </span>
-                                        {signatureData && signatureData.exists ? (
-                                            <span className="text-green-600 text-sm">✓ Available</span>
-                                        ) : (
-                                            <span className="text-gray-500 text-sm">Not uploaded</span>
+                        {getCurrentTemplateRequirements() && getCurrentTemplateRequirements().signatures ? (
+                            <div>
+                                <h4 className="font-medium mb-3">Required Signatures for this Template:</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {getCurrentTemplateRequirements().signatures.map(sig => (
+                                        <div key={sig.key} className="p-3 border rounded">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-medium">
+                                                    {sig.label}:
+                                                </span>
+                                                {signatures[sig.key] && signatures[sig.key].exists ? (
+                                                    <span className="text-green-600 text-sm">✓ Available</span>
+                                                ) : (
+                                                    <span className="text-gray-500 text-sm">Not uploaded</span>
+                                                )}
+                                            </div>
+                                            {signatures[sig.key] && signatures[sig.key].exists && (
+                                                <div className="text-xs text-gray-600">
+                                                    {signatures[sig.key].filename}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Signature Layout:</strong> {getCurrentTemplateRequirements().layout}
+                                    </p>
+                                    <p className="text-sm text-blue-600 mt-1">
+                                        • Available digital signatures will be automatically included
+                                    </p>
+                                    <p className="text-sm text-blue-600">
+                                        • Missing signatures will show as blank spaces for manual signing
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.entries(signatures).map(([role, signatureData]) => (
+                                    <div key={role} className="p-3 border rounded">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="font-medium capitalize">
+                                                {role.replace('_', ' ')}:
+                                            </span>
+                                            {signatureData && signatureData.exists ? (
+                                                <span className="text-green-600 text-sm">✓ Available</span>
+                                            ) : (
+                                                <span className="text-gray-500 text-sm">Not uploaded</span>
+                                            )}
+                                        </div>
+                                        {signatureData && signatureData.exists && (
+                                            <div className="text-xs text-gray-600">
+                                                {signatureData.filename}
+                                            </div>
                                         )}
                                     </div>
-                                    {signatureData && signatureData.exists && (
-                                        <div className="text-xs text-gray-600">
-                                            {signatureData.filename}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        
-                        <div className="mt-4 text-sm text-gray-600">
-                            <p>• Documents will include space for all four signature roles.</p>
-                            <p>• Available digital signatures will be automatically included.</p>
-                            <p>• Missing signatures will show as blank spaces for manual signing.</p>
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    <h3 className="text-lg font-semibold mb-4">5. Select Output Format</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                        {getCurrentTemplateRequirements() && getCurrentTemplateRequirements().requiredFields && 
+                         getCurrentTemplateRequirements().requiredFields.some(field => 
+                             ['sl_no', 'course', 'subject_code', 'candidates', 'date_session', 'bank_name', 'account_no', 'ifsc_code', 'pan_no', 'claimed_amount', 'tds', 'net_amount'].includes(field)
+                         ) ? '4. Select Output Format' : '4. Select Output Format'}
+                    </h3>
                     <div className="mb-6">
                         <div className="flex gap-4">
                             <label className="flex items-center">
@@ -382,10 +558,11 @@ const LetterGeneration = () => {
                             onChange={(e) => setSelectedRole(e.target.value)}
                             className="w-full p-2 border rounded"
                         >
-                            <option value="coordinator">Coordinator</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="external_examiner">External Examiner</option>
-                            <option value="admin">Admin</option>
+                            {availableRoles.map(role => (
+                                <option key={role.key} value={role.key}>
+                                    {role.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     

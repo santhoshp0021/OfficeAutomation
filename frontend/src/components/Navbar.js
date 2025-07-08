@@ -58,7 +58,8 @@ const Navbar = ({ user, onLogout }) => {
                     { label: 'Dashboard', path: '/coordinator-dashboard/dashboard' },
                     { label: 'Review Schedule', path: '/coordinator-dashboard/review-schedule' },
                     { label: 'Viva Schedule', path: '/coordinator-dashboard/viva-schedule' },
-                    { label: 'Letters', path: '/coordinator-dashboard/letters' }
+                    { label: 'Letters', path: '/coordinator-dashboard/letters' },
+                    { label: 'Document Center', path: '/coordinator-dashboard/documents' }
                 ];
             default:
                 return [];

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Routes, Route, Navigate } from 'react-router-
 import Navbar from './Navbar';
 import CoordinatorReviewSchedule from './CoordinatorReviewSchedule';
 import LetterGeneration from './coordinator/LetterGeneration';
+import DocumentGenerationCenter from './DocumentGenerationCenter';
 import CoordinatorVivaSchedule from './coordinator/CoordinatorVivaSchedule';
 
 const CoordinatorRulesDashboard = () => {
@@ -100,6 +101,7 @@ const CoordinatorDashboard = () => {
                     <Route path="review-schedule" element={<CoordinatorReviewSchedule />} />
                     <Route path="viva-schedule" element={<CoordinatorVivaSchedule />} />
                     <Route path="letters" element={<LetterGeneration />} />
+                    <Route path="documents" element={<DocumentGenerationCenter />} />
                     <Route path="*" element={<Navigate to="dashboard" replace />} />
                 </Routes>
             </div>
