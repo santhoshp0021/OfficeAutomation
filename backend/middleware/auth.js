@@ -17,6 +17,9 @@ module.exports = async (req, res, next) => {
         // Attach the user object and ensure id is set correctly
         req.user = user;
         req.user.id = user._id;
+        // Preserve selected role and team from JWT
+        req.user.role = decoded.role;
+        req.user.team = decoded.team;
         next();
     } catch (error) {
         res.status(401).json({ message: 'Please authenticate' });
