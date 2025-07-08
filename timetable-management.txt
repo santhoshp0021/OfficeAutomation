@@ -1,0 +1,162 @@
+timetable-management/
+│
+├── backend/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── middleware/
+│   ├── config/
+│   ├── utils/
+│   └── server.js
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── context/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── package.json
+│
+├── .env
+├── package.json
+├── README.md
+└── .gitignore
+
+
+
+🔁 Backend Breakdown (/backend)
+/controllers
+Business logic for handling requests.
+
+authController.js
+
+courseController.js
+
+facultyController.js
+
+timetableController.js
+
+workloadController.js
+
+/models
+MongoDB schema definitions.
+
+User.js
+
+Course.js
+
+ElectivePreference.js
+
+Timetable.js
+
+Workload.js
+
+/routes
+API endpoints.
+
+authRoutes.js
+
+courseRoutes.js
+
+timetableRoutes.js
+
+workloadRoutes.js
+
+facultyRoutes.js
+
+/middleware
+Custom middleware.
+
+authMiddleware.js (JWT validation)
+
+roleMiddleware.js (Admin, HOD, Faculty)
+
+/config
+db.js (MongoDB connection logic)
+
+/utils
+reportGenerator.js (for PDF/Excel reports)
+
+constraintsChecker.js (for timetable rules)
+
+server.js
+Express server setup.
+
+🎨 Frontend Breakdown (/frontend/src)
+/assets
+Images, logos, icons, etc.
+
+/components
+Reusable UI components.
+
+Navbar.jsx
+
+Sidebar.jsx
+
+TimetableCard.jsx
+
+CourseSelector.jsx
+
+/pages
+Application views.
+
+Login.jsx
+
+Dashboard.jsx
+
+ElectiveSubmission.jsx
+
+TimetableBuilder.jsx
+
+WorkloadReport.jsx
+
+AuditReports.jsx
+
+/context
+AuthContext.jsx (for login roles)
+
+GlobalStateProvider.jsx
+
+/services
+API interaction logic using Axios.
+
+authService.js
+
+courseService.js
+
+timetableService.js
+
+/utils
+timetableUtils.js
+
+roleUtils.js
+
+App.jsx
+Main routing with React Router DOM.
+
+🔐 Key Features Mapped to Code
+Feature	Path/Code
+Role-Based Login (Admin, HOD, Faculty)	authController.js, roleMiddleware.js, AuthContext.jsx
+Elective Preferences	ElectivePreference.js, courseController.js, ElectiveSubmission.jsx
+Timetable with Constraints	constraintsChecker.js, timetableController.js, TimetableBuilder.jsx
+Workload Calculation	workloadController.js, WorkloadReport.jsx
+Reports for Audit	reportGenerator.js, AuditReports.jsx
+Real-Time Dynamic Course Availability	WebSocket or polling in courseService.js
+
+📦 Recommended Tech Stack
+Frontend: React, Tailwind CSS, React Router, Axios
+
+Backend: Node.js, Express.js, JWT, bcrypt
+
+Database: MongoDB (with Mongoose)
+
+Utilities:
+
+pdfkit / exceljs (for reports)
+
+socket.io (optional for real-time updates)
