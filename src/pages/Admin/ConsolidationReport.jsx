@@ -89,7 +89,7 @@ export function ConsolidationReportScholars() {
   const [pubYear, setPubYear] = useState("");
   const [pubType, setPubType] = useState("");
   const [facultyDept, setFacultyDept] = useState("");
-  const [facultyPosition, setFacultyPosition] = useState("");
+  const [facultyDesignation, setFacultyDesignation] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 const [cseLogo, setCseLogo] = useState("");
@@ -155,7 +155,7 @@ useEffect(() => {
   const filteredFaculty = faculty.filter(f => {
     let ok = true;
     if (facultyDept && f.department !== facultyDept) ok = false;
-    if (facultyPosition && f.position !== facultyPosition) ok = false;
+    if (facultyDesignation && f.designation !== facultyDesignation) ok = false;
     return ok;
   });
 
@@ -224,7 +224,7 @@ useEffect(() => {
   const activeFaculty = filteredFaculty.filter(f => f.isActive).length;
   const inactiveFaculty = filteredFaculty.filter(f => !f.isActive).length;
   const facultyByDept = groupBy(filteredFaculty, f => f.department || "Unknown");
-  const facultyByPosition = groupBy(filteredFaculty, f => f.position || "Unknown");
+  const facultyByDesignation = groupBy(filteredFaculty, f => f.designation || "Unknown");
 
   // Export CSV for summary
   function exportSummaryCSV() {

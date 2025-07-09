@@ -8,7 +8,7 @@ export default function Signup({ onSuccess }) {
     email: "",
     password: "",
     role: "faculty",
-    position: "Assistant Professor",
+    designation: "Assistant Professor",
     department: "",
     dob: "",
     dateOfJoining: "",
@@ -17,7 +17,7 @@ export default function Signup({ onSuccess }) {
     qualifications: "",
     scaleOfPay: "",
     presentPay: "",
-    natureOfAppointment: ""
+    natureOfAppointment: "",
   });
   const [step, setStep] = useState(1); // 1: basic, 2: faculty details
   const { signup } = UserData();
@@ -44,7 +44,7 @@ export default function Signup({ onSuccess }) {
         email: "",
         password: "",
         role: "faculty",
-        position: "Assistant Professor",
+        designation: "Assistant Professor",
         department: "",
         dob: "",
         dateOfJoining: "",
@@ -53,7 +53,7 @@ export default function Signup({ onSuccess }) {
         qualifications: "",
         scaleOfPay: "",
         presentPay: "",
-        natureOfAppointment: ""
+        natureOfAppointment: "",
       });
       navigate("/login");
     }
@@ -122,11 +122,11 @@ export default function Signup({ onSuccess }) {
       )}
       {step === 2 && (
         <>
-          <label htmlFor="position">Position</label>
+          <label htmlFor="designation">designation</label>
           <select
-            id="position"
-            name="position"
-            value={form.position}
+            id="designation"
+            name="designation"
+            value={form.designation}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded"
             required
@@ -134,10 +134,8 @@ export default function Signup({ onSuccess }) {
             <option value="Assistant Professor">Assistant Professor</option>
             <option value="Associate Professor">Associate Professor</option>
             <option value="Professor">Professor</option>
-            <option value="HOD">HOD</option>
             <option value="Guest Faculty">Guest Faculty</option>
             <option value="Emeritus Professor">Emeritus Professor</option>
-            <option value="Other">Other</option>
           </select>
           <label htmlFor="department">Department</label>
           <input
@@ -205,7 +203,7 @@ export default function Signup({ onSuccess }) {
             name="qualifications"
             value={form.qualifications}
             onChange={handleChange}
-            placeholder="Qualifications"
+            placeholder="Enter Qualifications as comma separated values"
             className="w-full px-3 py-2 border rounded"
             required
           />
@@ -245,7 +243,9 @@ export default function Signup({ onSuccess }) {
                 <option value="">Select Nature of Appointment</option>
                 <option value="Temporary">Temporary</option>
                 <option value="Probationer">Probationer</option>
-                <option value="Approved Probationer">Approved Probationer</option>
+                <option value="Approved Probationer">
+                  Approved Probationer
+                </option>
                 <option value="Permanent">Permanent</option>
               </select>
             </>

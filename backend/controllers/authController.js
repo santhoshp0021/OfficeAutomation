@@ -4,7 +4,22 @@ const bcrypt = require("bcrypt");
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, position, department, dob, dateOfJoining, phone, gender, qualifications, scaleOfPay, presentPay, natureOfAppointment } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      designation,
+      department,
+      dob,
+      dateOfJoining,
+      phone,
+      gender,
+      qualifications,
+      scaleOfPay,
+      presentPay,
+      natureOfAppointment,
+    } = req.body;
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ message: "Email already exists" });
@@ -17,20 +32,41 @@ const register = async (req, res) => {
       await Faculty.create({
         _id: user._id,
         facultyId: "FAC" + user._id.toString().slice(-3),
+
         name,
-        position: position || (role === "hod" ? "Head of Department" : "Assistant Professor"),
-        contactInfo: { email, phone: phone || "" },
-        areasOfExpertise: qualifications ? qualifications.split(',').map(q => q.trim()) : [],
+        designation:
+          designation ||
+          (role === "hod" ? "Head of Department" : "Assistant Professor"),
+
+        contactInfo: {
+          email,
+          phone: phone || "",
+        },
+
+        areasOfExpertise: qualifications
+          ? qualifications.split(",").map((q) => q.trim())
+          : [],
+
+        preferredCourses: [],
+        allocatedCourse: "",
+
+        courseHandled: [],
         classesHandled: [],
+
+        freeHours: {},
+
         dob: dob ? new Date(dob) : new Date("1990-01-01"),
         dateOfJoining: dateOfJoining ? new Date(dateOfJoining) : new Date(),
+
         department: department || "",
         gender: gender || "",
+
         scaleOfPay: scaleOfPay || "",
         presentPay: presentPay || "",
         natureOfAppointment: natureOfAppointment || "Temporary",
+
         profilePicUrl: "",
-        isActive: true
+        isActive: true,
       });
     }
 
@@ -55,12 +91,12 @@ const login = async (req, res) => {
 
   // TEMP: Attach to req.user (in prod use session/JWT)
   req.user = user;
-  console.log(req.user)
+  console.log(req.user);
 
   res.status(200).json({
     message: "Login successful",
     user: {
-      userId:user._id,
+      userId: user._id,
       name: user.name,
       email: user.email,
       role: user.role,

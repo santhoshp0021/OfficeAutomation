@@ -8,7 +8,7 @@ import { UserData } from "../../context/UserContext";
 
 function Publications() {
   const { user } = UserData();
-  const isAdmin = user.position === "Admin";
+  const isAdmin = user.designation === "Admin";
   const [publicationsList, setPublicationsList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filterType, setFilterType] = useState("title");

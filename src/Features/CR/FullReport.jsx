@@ -43,13 +43,13 @@ export default function FullReport({ user }) {
     researchGuidance: {
       qualified: {
         phd: 1,
-        mphil: 0,
+        mphil: 2,
         pg: 2,
       },
       registered: {
         phd: 1,
         pg: 1,
-        pgDiploma: 0,
+        pgDiploma: 1,
         ug: 2,
       },
     },
@@ -160,7 +160,11 @@ export default function FullReport({ user }) {
   const [loading, setLoading] = useState(true);
   const isHOD = user?.role === "hod";
   const [odRequests, setOdRequests] = useState([]);
+  const facultyEmailToUse = isHOD ? faculty.email : user.email;
+  const facultyIdToUse = isHOD ? faculty._id || faculty.userId : user.userId;
 
+  console.log("faculty object:", faculty);
+  console.log("facultyIdToUse:", facultyIdToUse);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -247,23 +251,64 @@ export default function FullReport({ user }) {
 
   useEffect(() => {
     async function fetchOD() {
+      const email = faculty?.email;
+      const id = faculty?._id || faculty?.userId;
+      if (!email && !id) return; // Don't fetch if not ready
+
+      let api;
+      if (email) {
+        api = `http://localhost:5000/api/odrequests/user/email/${email}`;
+      } else if (id) {
+        api = `http://localhost:5000/api/odrequests/user/${id}`;
+      } else {
+        return;
+      }
       try {
-        const api = `http://localhost:5000/api/odrequests/user/${user.userId}`;
         const res = await axios.get(api, {
           headers: { "x-user-email": user.email },
         });
         setOdRequests(res.data || []);
+        // Collect all supporting documents from OD requests
+        const odDocs = (res.data || []).flatMap((r) =>
+          (r.supportingDocuments || []).map((doc) => ({
+            filename: doc,
+            url: doc.startsWith("http")
+              ? doc
+              : doc.startsWith("/uploads/")
+              ? `http://localhost:5000${doc}`
+              : `http://localhost:5000/uploads/${doc}`,
+          }))
+        );
+        // Merge with existing attachments, avoiding duplicates by filename
+        setForm((prev) => {
+          const existing = prev.attachments || [];
+          const filenames = new Set(existing.map((a) => a.filename));
+          const merged = [
+            ...existing,
+            ...odDocs.filter((a) => !filenames.has(a.filename)),
+          ];
+          return { ...prev, attachments: merged };
+        });
         console.log("Fetched OD requests:", res.data);
-        res.data.forEach(r => {
-          console.log("OD request:", r._id, "startDate:", r.startDate, "eventType:", r.eventType);
+        res.data.forEach((r) => {
+          console.log(
+            "OD request:",
+            r._id,
+            "startDate:",
+            r.startDate,
+            "eventType:",
+            r.eventType
+          );
         });
       } catch {
         setOdRequests([]);
         console.log("Failed to fetch OD requests");
       }
     }
-    if (user?.userId) fetchOD();
-  }, [user]);
+    if (faculty && (faculty.email || faculty._id || faculty.userId)) {
+      fetchOD();
+    }
+  }, [faculty, user]);
 
   // Filter OD requests by period/year if needed
   const year = form.year || new Date().getFullYear();
@@ -274,7 +319,7 @@ export default function FullReport({ user }) {
   const periodEnd = period === "june" ? new Date(`${year}-06-30`) : end;
   console.log("periodStart", periodStart, "periodEnd", periodEnd);
   // Robust, case-insensitive filtering
-  const filteredOD = odRequests.filter(r => {
+  const filteredOD = odRequests.filter((r) => {
     if (!r.eventType) return false;
     // Uncomment the next two lines to test without date filtering:
     // return true;
@@ -282,14 +327,14 @@ export default function FullReport({ user }) {
     return s >= periodStart && s <= periodEnd;
   });
   const odConferences = filteredOD.filter(
-    r => r.eventType && ["conference", "workshop"].includes(r.eventType.toLowerCase())
+    (r) =>
+      r.eventType &&
+      ["conference", "workshop"].includes(r.eventType.toLowerCase())
   );
   const odOther = filteredOD.filter(
-    r =>
+    (r) =>
       r.eventType &&
-      !["conference", "workshop"].includes(
-        r.eventType.toLowerCase()
-      )
+      !["conference", "workshop"].includes(r.eventType.toLowerCase())
   );
   console.log("filteredOD", filteredOD);
   console.log("odConferences", odConferences);
@@ -308,7 +353,7 @@ export default function FullReport({ user }) {
     }
   };
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const isFaculty = user.role === "faculty";
@@ -399,7 +444,7 @@ export default function FullReport({ user }) {
         otherContributions: form.otherContributions,
         // attachments: updatedAttachments,
       };
-      console.log(form,selfAssessmentOnly)
+      console.log(form, selfAssessmentOnly);
       await axios.patch(
         `http://localhost:5000/api/crreport/${reportId}/update-full`,
         {
@@ -515,10 +560,14 @@ export default function FullReport({ user }) {
         odConferences={odConferences}
         odOther={odOther}
       />
-      {user.role === "faculty" &&  (
-        <FacultyAttachments form={form} setForm={setForm} readOnly={form.status !== "draft"} />
+      {user.role === "faculty" && (
+        <FacultyAttachments
+          form={form}
+          setForm={setForm}
+          readOnly={form.status !== "draft"}
+        />
       )}
-      {user.role !== "faculty" &&  (
+      {user.role !== "faculty" && (
         <FacultyAttachments form={form} setForm={setForm} readOnly={true} />
       )}
       <FacultySignatures form={form} setForm={setForm} user={user} />

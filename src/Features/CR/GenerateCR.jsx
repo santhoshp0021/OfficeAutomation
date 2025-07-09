@@ -554,7 +554,7 @@ export default function GenerateCR() {
         </div>
         <div className="grid grid-cols-[350px_1fr] items-center">
           <span className="font-semibold">2. Designation</span>
-          <span className="font-mono">: {facultyProfile.position}</span>
+          <span className="font-mono">: {facultyProfile.designation}</span>
         </div>
         <div className="grid grid-cols-[350px_1fr] items-center">
           <span className="font-semibold">3. Scale of pay and present pay</span>
@@ -628,7 +628,7 @@ export default function GenerateCR() {
               </>
             )}
             <div className="mt-4 font-semibold">{user.name.toUpperCase()}</div>
-            <div className="text-sm">({facultyProfile.position})</div>
+            <div className="text-sm">({facultyProfile.designation})</div>
             <div className="text-sm">(Name in Block letters and Designation)</div>
           </div>
         </div>
@@ -658,7 +658,7 @@ export default function GenerateCR() {
               </>
             )}
             <div className="mt-4 font-semibold">{user.name.toUpperCase()}</div>
-            <div className="text-sm">({facultyProfile.position})</div>
+            <div className="text-sm">({facultyProfile.designation})</div>
             <div className="text-sm">(Name in Block letters and Designation)</div>
           </div>
         </div>
@@ -685,7 +685,7 @@ export default function GenerateCR() {
     </div>
     <div className="grid grid-cols-[200px_1fr] items-center">
         <span className="font-semibold">Designation:</span>
-        <span>{facultyProfile.position}</span>
+        <span>{facultyProfile.designation}</span>
     </div>
     <div className="grid grid-cols-[240px_1fr] items-center">
         <span className="font-semibold">Report for the Year / Half-year ending:</span>
@@ -764,7 +764,7 @@ export default function GenerateCR() {
               </>
             )}
             <div className="mt-4 font-semibold">{user.name.toUpperCase()}</div>
-            <div className="text-sm">({facultyProfile.position})</div>
+            <div className="text-sm">({facultyProfile.designation})</div>
             <div className="text-sm">(Name in Block letters and Designation)</div>
         </div>
     </div>

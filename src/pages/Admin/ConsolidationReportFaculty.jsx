@@ -19,7 +19,7 @@ export default function ConsolidationReportFaculty() {
   const [selectedFacultyId, setSelectedFacultyId] = useState("");
 
   const facultyByDept = useMemo(() => groupBy(faculty, f => f.department || "Unknown"), [faculty]);
-  const facultyByPosition = useMemo(() => groupBy(faculty, f => f.position || "Unknown"), [faculty]);
+  const facultyByDesignation = useMemo(() => groupBy(faculty, f => f.designation || "Unknown"), [faculty]);
   const facultyByGender = useMemo(() => groupBy(faculty, f => (f.gender ? f.gender.charAt(0).toUpperCase() + f.gender.slice(1) : "Unknown")), [faculty]);
 
   const navigate = useNavigate();
@@ -139,7 +139,7 @@ export default function ConsolidationReportFaculty() {
     y += 22;
     pdf.text(`Department: ${selectedFaculty.department || "-"}`, 40, y);
     y += 18;
-    pdf.text(`Position: ${selectedFaculty.position || "-"}`, 40, y);
+    pdf.text(`Designation: ${selectedFaculty.designation || "-"}`, 40, y);
     y += 18;
     pdf.text(`Email: ${selectedFaculty.contactInfo?.email || "-"}`, 40, y);
     y += 18;
@@ -659,7 +659,7 @@ export default function ConsolidationReportFaculty() {
               <h3 className="font-bold mb-2">Basic Info</h3>
               <ul className="text-base space-y-1">
                 <li><b>Department:</b> {selectedFaculty.department || '-'}</li>
-                <li><b>Position:</b> {selectedFaculty.position || '-'}</li>
+                <li><b>Designation:</b> {selectedFaculty.designation || '-'}</li>
                 <li><b>Email:</b> {selectedFaculty.contactInfo?.email || '-'}</li>
                 <li><b>Phone:</b> {selectedFaculty.contactInfo?.phone || '-'}</li>
                 <li><b>Gender:</b> {selectedFaculty.gender || '-'}</li>
@@ -753,11 +753,11 @@ export default function ConsolidationReportFaculty() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          {/* By Position Bar */}
+          {/* By Designation Bar */}
           <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-            <h3 className="font-semibold mb-2 text-lg">Faculty by Position</h3>
+            <h3 className="font-semibold mb-2 text-lg">Faculty by Designation</h3>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={Object.entries(facultyByPosition).map(([pos, count]) => ({ pos, count }))} layout="vertical" margin={{ left: 20, right: 20 }}>
+              <BarChart data={Object.entries(facultyByDesignation).map(([pos, count]) => ({ pos, count }))} layout="vertical" margin={{ left: 20, right: 20 }}>
                 <XAxis type="number" allowDecimals={false} />
                 <YAxis dataKey="pos" type="category" width={120} />
                 <Tooltip />

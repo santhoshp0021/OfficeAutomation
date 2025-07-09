@@ -147,7 +147,7 @@ export default function AddScholar({ formData = {}, onClose, onUpdate }) {
 
   return (
     <div className=" text-lg min-h-screen bg-[#f5f7fa] flex items-center justify-center py-10">
-      <Toaster position="top-center" />
+      {/* <Toaster position="top-center" /> */}
       <form
         onSubmit={handleSubmit(onSubmit, onError)}
         className="w-full max-w-2xl border overflow-y-auto h-[90vh] border-gray-300 rounded-xl bg-white shadow-md p-10 "

@@ -41,6 +41,18 @@ router.get(
       if (!report) {
         return res.status(404).json({ message: "CR Report not found" });
       }
+      // Fetch the faculty user to get the _id and email
+      const facultyUser = await Faculty.findOne({ facultyId: report.faculty.facultyId });
+      
+      // Merge faculty user data with report faculty data
+      if (facultyUser) {
+        report.faculty = {
+          ...report.faculty.toObject(),
+          _id: facultyUser._id,
+          userId: facultyUser._id,
+          email: facultyUser.contactInfo?.email
+        };
+      }
       res.json(report);
     } catch (err) {
       res.status(500).json({ message: err.message });

@@ -84,15 +84,17 @@ export default function FacultyAttachments({ form, setForm, readOnly }) {
           {form.attachments.map((file, index) => {
             const isUploaded = file.url && file.filename;
             const displayName = file.name || file.filename;
-
+            const linkUrl = file.url
+              ? (file.url.startsWith('http') ? file.url : `http://localhost:5000${file.url}`)
+              : null;
             return (
               <li
                 key={index}
                 className="flex justify-between items-center text-sm"
               >
-                {isUploaded ? (
+                {linkUrl ? (
                   <a
-                    href={`http://localhost:5000${file.url}`}
+                    href={linkUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-700 underline"

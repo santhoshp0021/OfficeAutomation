@@ -74,7 +74,7 @@ const getOrCreateCRReport = async (req, res) => {
         name: faculty.name,
         dob: faculty.dob,
         qualifications: faculty.areasOfExpertise?.join(", "),
-        designation: faculty.position,
+        designation: faculty.designation,
         scaleOfPay: faculty.scaleOfPay,
         presentPay: faculty.presentPay,
         postHeld: faculty.natureOfAppointment,

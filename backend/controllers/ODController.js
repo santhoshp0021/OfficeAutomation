@@ -16,6 +16,7 @@ const createRequest = async (req, res) => {
       ...data,
       supportingDocuments: files,
       userId: req.user._id,
+      userEmail: req.user.email,
     });
 
     await od.save();
@@ -81,6 +82,16 @@ const getUserRequests = async (req, res) => {
     res.json(data);
   } catch {
     res.status(500).json({ error: "Unable to fetch user requests" });
+  }
+};
+
+const getUserRequestsByEmail = async (req, res) => {
+  try {
+    const userEmail = req.params.email;
+    const data = await ODRequest.find({ userEmail }).sort({ startDate: -1 });
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: "Unable to fetch user requests by email" });
   }
 };
 
@@ -260,6 +271,7 @@ const generateODLetter = async (req, res) => {
 
 module.exports = {
   getAllRequests,
+  getUserRequestsByEmail,
   getUserRequests,
   createRequest,
   addDocs,

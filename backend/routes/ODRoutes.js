@@ -7,6 +7,7 @@ const {
   updateStatus,
   getAllRequests,
   getUserRequests,
+  getUserRequestsByEmail,
   updateODDetails,
   generateODLetter
 } = require("../controllers/ODController");
@@ -45,6 +46,7 @@ router.put("/update-details/:id", updateODDetails);
 router.put("/:id/:status", restrictTo("hod", "admin"), updateStatus);
 router.get("/", restrictTo("hod", "admin"), getAllRequests);
 router.get("/user/:userId", restrictTo("faculty"), getUserRequests);
+router.get("/user/email/:email", restrictTo("faculty", "hod", "admin"), getUserRequestsByEmail);
 
 router.get("/:id/generate-letter", restrictTo("faculty", "hod", "admin"), generateODLetter);
 
