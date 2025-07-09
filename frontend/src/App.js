@@ -38,8 +38,8 @@ const AppContent = () => {
   const userRole = localStorage.getItem('userRole');
 
   useEffect(() => {
-    // Redirect to role selection if no role is set
-    if (!userRole && location.pathname !== '/') {
+    // Redirect to role selection if no role is set (but allow access to about page)
+    if (!userRole && location.pathname !== '/' && location.pathname !== '/about') {
       navigate('/');
     }
     // Redirect based on role
