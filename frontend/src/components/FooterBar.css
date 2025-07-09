@@ -1,0 +1,128 @@
+.footer-bar {
+  width: 100%;
+}
+
+/* Add hover effects for links */
+a {
+  color: #ecf0f1;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #3498db;
+}
+
+/* Add responsive styles */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .footer-section {
+    align-items: center;
+  }
+
+  .contact-item {
+    justify-content: center;
+  }
+
+  .footer-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Add animation for the gradient border */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Add hover animation for contact items */
+.contact-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #3498db;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.contact-item:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Add animation for icons */
+.contact-item svg {
+  transition: transform 0.3s ease;
+}
+
+.contact-item:hover svg {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Add animation for the footer title */
+.footer-title {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-title::before {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #3498db;
+  transition: width 0.3s ease;
+}
+
+.footer-title:hover::before {
+  width: 100%;
+}
+
+/* Add animation for the footer bottom text */
+.footer-bottom {
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-bottom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3498db, transparent);
+  animation: slideRight 3s linear infinite;
+}
+
+@keyframes slideRight {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+} 

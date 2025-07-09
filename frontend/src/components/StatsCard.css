@@ -1,0 +1,24 @@
+.stats-card {
+  display: flex;
+  align-items: center;
+  background: rgba(44, 62, 80, 0.7);
+  border-radius: 16px;
+  padding: 1.1rem 1.7rem;
+  min-width: 180px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  gap: 1.1rem;
+}
+.stats-card i {
+  font-size: 2rem;
+  color: #b388ff;
+  margin-right: 0.7rem;
+}
+.stats-label {
+  font-size: 1rem;
+  color: #e0d7f7;
+}
+.stats-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+} 

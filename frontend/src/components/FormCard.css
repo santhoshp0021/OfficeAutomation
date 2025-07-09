@@ -1,0 +1,58 @@
+.form-card {
+  background: rgba(44, 62, 80, 0.85);
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.13);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.1rem;
+}
+.form-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.form-card p {
+  font-size: 1.2rem;
+  color: #e0d7f7;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+.form-card button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.feedback-btn {
+  background: #8e44ad;
+  color: #fff;
+}
+.feedback-btn:hover {
+  background: #6c3483;
+}
+.grievance-btn {
+  background: #8e44ad;
+  color: #fff;
+}
+.grievance-btn:hover {
+  background: #6c3483;
+}
+.form-card i {
+  font-size: 1.2rem;
+}
+@media (max-width: 500px) {
+  .form-card {
+    min-width: 90vw;
+    max-width: 98vw;
+  }
+}
