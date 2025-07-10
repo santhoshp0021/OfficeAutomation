@@ -1,7 +1,7 @@
-import express from "express";
-import Grievance from "../models/grievance.js";
-import Notification from "../models/notification.js";
-import { requireRole, verifyToken } from "../middleware/auth.js";
+const express = require("express");
+const Grievance = require("../models/grievance");
+const Notification = require("../models/notification");
+const { requireRole, verifyToken } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -56,7 +56,11 @@ router.get("/", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Get grievances by student
-router.get("/student/:studentId",verifyToken,requireRole("admin"),async (req, res) => {
+router.get(
+  "/student/:studentId",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
     try {
       const { studentId } = req.params;
       const grievances = await Grievance.find({ student: studentId })
@@ -158,7 +162,11 @@ router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Get grievance statistics (for dashboard)
-router.get("/stats/overview", verifyToken,requireRole("admin"),async (req, res) => {
+router.get(
+  "/stats/overview",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
     try {
       const totalGrievances = await Grievance.countDocuments();
       const pendingGrievances = await Grievance.countDocuments({
@@ -187,4 +195,4 @@ router.get("/stats/overview", verifyToken,requireRole("admin"),async (req, res) 
   }
 );
 
-export default router;
+module.exports = router;

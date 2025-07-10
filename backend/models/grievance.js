@@ -1,7 +1,11 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const grievanceSchema = new mongoose.Schema({
-  student: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: true,
+  },
   faculty: { type: mongoose.Schema.Types.ObjectId, ref: "Faculty" },
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
   batch: { type: String, required: true },
@@ -19,4 +23,4 @@ const grievanceSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("Grievance", grievanceSchema);
+module.exports = mongoose.model("Grievance", grievanceSchema);

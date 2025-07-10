@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { FaExclamationCircle } from "react-icons/fa";
 import backgroundImage from "../../../assests/Red_Building_Cropped.jpg";
 import HeaderBar from "../../../components/HeaderBar";
 import FooterBar from "../../../components/FooterBar";
 import { useAuth } from "../../../contexts/AuthContext";
-import { apiFetch } from '../../../utils/api';
+import { apiFetch } from "../../../utils/api";
 // Animations
 const slideIn = keyframes`
   from {
@@ -39,7 +39,7 @@ const PageContainer = styled.div`
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -152,7 +152,7 @@ const TextArea = styled.textarea`
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.9);
   color: #2c3e50;
-  
+
   &:focus {
     outline: none;
     border-color: #e74c3c;
@@ -179,13 +179,13 @@ const SubmitButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  
+
   &:hover {
     background: #c0392b;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
-  
+
   &:disabled {
     background: #bdc3c7;
     cursor: not-allowed;
@@ -263,7 +263,7 @@ const GrievancePage = () => {
 
     try {
       const studentId = currentUser?.studentRef || currentUser?._id;
-      
+
       const response = await apiFetch("http://localhost:5000/api/grievances", {
         method: "POST",
         headers: {
@@ -289,7 +289,7 @@ const GrievancePage = () => {
       const result = await response.json();
       console.log("Grievance submitted:", result);
       toast.success("Grievance submitted successfully!");
-      
+
       // Reset form
       setFormData({
         category: "",
@@ -312,7 +312,7 @@ const GrievancePage = () => {
     "Administrative",
     "Infrastructure",
     "Hostel",
-    "Other"
+    "Other",
   ];
 
   // const departments = [
@@ -325,115 +325,123 @@ const GrievancePage = () => {
 
   return (
     <>
-    <HeaderBar />
-    <PageContainer>
-      <Container>
-        <Title>
-          <FaExclamationCircle />
-          Submit Grievance
-        </Title>
-        
-        {loading && (
-          <div style={{ textAlign: "center", padding: "2rem" }}>
-            Loading...
-          </div>
-        )}
+      <HeaderBar />
+      <PageContainer>
+        <Container>
+          <Title>
+            <FaExclamationCircle />
+            Submit Grievance
+          </Title>
 
-        {error && (
-          <div style={{ 
-            textAlign: "center", 
-            padding: "2rem", 
-            color: "#e74c3c",
-            background: "#fdf2f2",
-            borderRadius: "8px",
-            marginBottom: "1rem"
-          }}>
-            {error}
-          </div>
-        )}
+          {loading && (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              Loading...
+            </div>
+          )}
 
-        {!loading && !error && (
-          <Form onSubmit={handleSubmit}>
-            <FormGroup
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+          {error && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "2rem",
+                color: "#e74c3c",
+                background: "#fdf2f2",
+                borderRadius: "8px",
+                marginBottom: "1rem",
+              }}
             >
-              <Label>
-                <FaExclamationCircle />
-                Category
-              </Label>
-              <Select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, category: e.target.value }))
-                }
-                required
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && (
+            <Form onSubmit={handleSubmit}>
+              <FormGroup
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <option value="">Select Category</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-            </FormGroup>
+                <Label>
+                  <FaExclamationCircle />
+                  Category
+                </Label>
+                <Select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      category: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </Select>
+              </FormGroup>
 
-            <FormGroup
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Label>
+              <FormGroup
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Label>
+                  <FaExclamationCircle />
+                  Subject
+                </Label>
+                <TextArea
+                  value={formData.subject}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      subject: e.target.value,
+                    }))
+                  }
+                  placeholder="Brief description of your grievance"
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <Label>
+                  <FaExclamationCircle />
+                  Detailed Description
+                </Label>
+                <TextArea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder="Please provide detailed information about your grievance..."
+                  required
+                />
+              </FormGroup>
+
+              <SubmitButton
+                type="submit"
+                disabled={isSubmitting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <FaExclamationCircle />
-                Subject
-              </Label>
-              <TextArea
-                value={formData.subject}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, subject: e.target.value }))
-                }
-                placeholder="Brief description of your grievance"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Label>
-                <FaExclamationCircle />
-                Detailed Description
-              </Label>
-              <TextArea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Please provide detailed information about your grievance..."
-                required
-              />
-            </FormGroup>
-
-            <SubmitButton
-              type="submit"
-              disabled={isSubmitting}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <FaExclamationCircle />
-              {isSubmitting ? "Submitting..." : "Submit Grievance"}
-            </SubmitButton>
-          </Form>
-        )}
-      </Container>
-    </PageContainer>
-    <FooterBar />
+                {isSubmitting ? "Submitting..." : "Submit Grievance"}
+              </SubmitButton>
+            </Form>
+          )}
+        </Container>
+      </PageContainer>
+      <FooterBar />
     </>
   );
 };

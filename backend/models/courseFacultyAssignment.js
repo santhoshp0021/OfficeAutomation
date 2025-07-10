@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const courseFacultyAssignmentSchema = new mongoose.Schema({
   course: { type: String, ref: "Course", required: true },
@@ -7,7 +7,7 @@ const courseFacultyAssignmentSchema = new mongoose.Schema({
   batch: { type: String, required: true },
 });
 
-export default mongoose.model(
+module.exports = mongoose.model(
   "CourseFacultyAssignment",
   courseFacultyAssignmentSchema
 );

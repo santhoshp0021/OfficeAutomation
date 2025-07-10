@@ -3,24 +3,26 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const PORT = process.env.PORT || 5000;
+const path=require("path")
+
 const facultyRoutes = require("./routes/facultyRoutes");
 const pgScholarRoutes = require("./routes/pgScholarRoutes");
 const publicationRoutes = require("./routes/publicationRoutes");
 const authRoutes = require("./routes/authRoutes");
-const path = require("path");
 const odRoutes = require("./routes/ODRoutes");
 const crReportRoutes = require("./routes/crRoutes");
-import studentRoutes from "./routes/student.js";
-import facultyRoutes from "./routes/faculty.js";
-import courseRoutes from "./routes/course.js";
-import courseFacultyAssignmentRoutes from "./routes/courseFacultyAssignment.js";
-import authRoutes from "./routes/auth.js";
-import feedbackRoutes from "./routes/feedback.js";
-import grievanceRoutes from "./routes/grievance.js";
-import notificationRoutes from "./routes/notification.js";
-import electiveCourseRoutes from "./routes/electiveCourse.js";
-import electiveStudentAssignmentRoutes from './routes/electiveStudentAssignment.js';
-import electiveCourseFacultyAssignmentRoutes from './routes/electiveCourseFacultyAssignment.js';
+
+const studentRoutes = require("./routes/student");
+const facultyNewRoutes = require("./routes/faculty"); // renamed to avoid duplicate
+const courseRoutes = require("./routes/course");
+const courseFacultyAssignmentRoutes = require("./routes/courseFacultyAssignment");
+const authNewRoutes = require("./routes/auth"); // renamed to avoid duplicate
+const feedbackRoutes = require("./routes/feedback");
+const grievanceRoutes = require("./routes/grievance");
+const notificationRoutes = require("./routes/notification");
+const electiveCourseRoutes = require("./routes/electiveCourse");
+const electiveStudentAssignmentRoutes = require("./routes/electiveStudentAssignment");
+const electiveCourseFacultyAssignmentRoutes = require("./routes/electiveCourseFacultyAssignment");
 
 dotenv.config();
 connectDB();
@@ -82,7 +84,7 @@ const createAdminUser = async () => {
   }
 };
 app.use("/api/students", studentRoutes);
-app.use("/api/faculties", facultyRoutes);
+app.use("/api/faculties", facultyNewRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/assignments", courseFacultyAssignmentRoutes);
 app.use("/api/auth", authRoutes);

@@ -1,17 +1,18 @@
-import express from "express";
-import ElectiveCourse from "../models/electiveCourse.js";
-import multer from "multer";
-import { parse } from "csv-parse";
-import fs from "fs";
-import ElectiveCourseFacultyAssignment from "../models/electiveCourseFacultyAssignment.js";
-import ElectiveStudentAssignment from "../models/electiveStudentAssignment.js";
-import { requireRole, verifyToken } from "../middleware/auth.js";
+const express = require("express");
+const ElectiveCourse = require("../models/electiveCourse");
+const multer = require("multer");
+const { parse } = require("csv-parse");
+const fs = require("fs");
+const ElectiveCourseFacultyAssignment = require("../models/electiveCourseFacultyAssignment");
+const ElectiveStudentAssignment = require("../models/electiveStudentAssignment");
+const { requireRole, verifyToken } = require("../middleware/auth");
+
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 // Get all Electives
-router.get("/",verifyToken, requireRole("admin"), async (req, res) => {
+router.get("/", verifyToken, requireRole("admin"), async (req, res) => {
   try {
     const electiveCourses = await ElectiveCourse.find();
     return res.status(200).json(electiveCourses);
@@ -24,7 +25,11 @@ router.get("/",verifyToken, requireRole("admin"), async (req, res) => {
 router.put("/:id", verifyToken, requireRole("admin"), async (req, res) => {
   try {
     const courseId = req.params.id;
-    const updatedCourse = await ElectiveCourse.findByIdAndUpdate(courseId, req.body, { new: true });
+    const updatedCourse = await ElectiveCourse.findByIdAndUpdate(
+      courseId,
+      req.body,
+      { new: true }
+    );
     return res.status(200).json(updatedCourse);
   } catch (err) {
     return res.status(500).json({ err: err.message });
@@ -76,12 +81,10 @@ router.post(
         try {
           const created = await ElectiveCourse.insertMany(courses);
           deleteFile(); // Delete file on success
-          res
-            .status(201)
-            .json({
-              message: "Elective Courses uploaded",
-              electiveCourses: created,
-            });
+          res.status(201).json({
+            message: "Elective Courses uploaded",
+            electiveCourses: created,
+          });
         } catch (err) {
           deleteFile(); // Delete file on database error
           console.error("Database error:", err);
@@ -122,4 +125,4 @@ router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

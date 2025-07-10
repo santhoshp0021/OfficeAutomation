@@ -1,7 +1,11 @@
-import express from "express";
-import Feedback from "../models/feedback.js";
-import { requireRole, requireRoles, verifyToken } from "../middleware/auth.js";
-import faculty from "../models/faculty.js";
+const express = require("express");
+const Feedback = require("../models/feedback");
+const {
+  requireRole,
+  requireRoles,
+  verifyToken,
+} = require("../middleware/auth");
+const faculty = require("../models/faculty");
 
 const router = express.Router();
 
@@ -83,7 +87,11 @@ router.post("/", verifyToken, requireRole("student"), async (req, res) => {
 // });
 
 // Get feedback by faculty
-router.get("/faculty/:facultyId",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/faculty/:facultyId",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const { facultyId } = req.params;
       const feedbacks = await Feedback.find({ faculty: facultyId })
@@ -98,7 +106,11 @@ router.get("/faculty/:facultyId",verifyToken,requireRoles("admin", "faculty"),as
 );
 
 // get avg score by faculty
-router.get("/faculty/avg/:facultyId",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/faculty/avg/:facultyId",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const { facultyId } = req.params;
       const feedbacks = await Feedback.find({ faculty: facultyId })
@@ -126,7 +138,11 @@ router.get("/faculty/avg/:facultyId",verifyToken,requireRoles("admin", "faculty"
 );
 
 // get avg ratings for questions
-router.get("/faculty/ratings/:facultyId",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/faculty/ratings/:facultyId",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const { facultyId } = req.params;
       const feedbacks = await Feedback.find(
@@ -172,7 +188,11 @@ router.get("/faculty/ratings/:facultyId",verifyToken,requireRoles("admin", "facu
 );
 
 // Get faculty courses with ratings
-router.get("/faculty/courses/:facultyId",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/faculty/courses/:facultyId",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const { facultyId } = req.params;
       const feedbacks = await Feedback.find({ faculty: facultyId })
@@ -218,7 +238,11 @@ router.get("/faculty/courses/:facultyId",verifyToken,requireRoles("admin", "facu
 );
 
 // Get yearly performance data for faculty
-router.get("/faculty/yearly/:facultyId",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/faculty/yearly/:facultyId",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const { facultyId } = req.params;
       const feedbacks = await Feedback.find({ faculty: facultyId }).sort({
@@ -275,7 +299,11 @@ router.get("/faculty/yearly/:facultyId",verifyToken,requireRoles("admin", "facul
 // });
 
 // Check if feedback already given for student-course combination
-router.get("/check/:studentId/:courseId/:batch/:semester",verifyToken,requireRoles("student", "admin"),async (req, res) => {
+router.get(
+  "/check/:studentId/:courseId/:batch/:semester",
+  verifyToken,
+  requireRoles("student", "admin"),
+  async (req, res) => {
     try {
       const { studentId, courseId, batch, semester } = req.params;
 
@@ -319,4 +347,4 @@ router.get("/", verifyToken, requireRole("admin"), async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

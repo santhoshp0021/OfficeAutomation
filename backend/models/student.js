@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -10,4 +10,4 @@ const studentSchema = new mongoose.Schema({
   isFeedbackGiven: { type: Boolean, default: false },
 });
 
-export default mongoose.model("Student", studentSchema);
+module.exports = mongoose.model("Student", studentSchema);

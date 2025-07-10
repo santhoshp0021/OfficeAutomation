@@ -1,11 +1,15 @@
-import express from "express";
-import Notification from "../models/notification.js";
-import { requireRole, verifyToken } from "../middleware/auth.js";
+const express = require("express");
+const Notification = require("../models/notification");
+const { requireRole, verifyToken } = require("../middleware/auth");
 
 const router = express.Router();
 
 // Get notifications for a student
-router.get("/student/:studentId",verifyToken,requireRole("student"),async (req, res) => {
+router.get(
+  "/student/:studentId",
+  verifyToken,
+  requireRole("student"),
+  async (req, res) => {
     try {
       const notifications = await Notification.find({
         student: req.params.studentId,
@@ -18,7 +22,11 @@ router.get("/student/:studentId",verifyToken,requireRole("student"),async (req, 
 );
 
 // Mark a notification as read
-router.put("/:id/read",verifyToken,requireRole("student"),async (req, res) => {
+router.put(
+  "/:id/read",
+  verifyToken,
+  requireRole("student"),
+  async (req, res) => {
     try {
       const notification = await Notification.findByIdAndUpdate(
         req.params.id,
@@ -36,7 +44,11 @@ router.put("/:id/read",verifyToken,requireRole("student"),async (req, res) => {
 );
 
 // Mark all notifications as read for a student
-router.put("/student/:studentId/read-all",verifyToken,requireRole("student"),async (req, res) => {
+router.put(
+  "/student/:studentId/read-all",
+  verifyToken,
+  requireRole("student"),
+  async (req, res) => {
     try {
       await Notification.updateMany(
         { student: req.params.studentId, isRead: false },
@@ -62,4 +74,4 @@ router.delete("/:id", verifyToken, requireRole("student"), async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

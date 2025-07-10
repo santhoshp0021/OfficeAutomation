@@ -1,9 +1,10 @@
-import express from "express";
-import User from "../models/user.js";
-import Student from "../models/student.js";
-import Faculty from "../models/faculty.js";
-import bcrypt from "bcrypt";
-import jwt from 'jsonwebtoken';
+const express = require("express");
+const User = require("../models/user");
+const Student = require("../models/student");
+const Faculty = require("../models/faculty");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
 
 const router = express.Router();
 
@@ -97,7 +98,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: "1d" }
     );
 
     res.status(200).json({
@@ -146,4 +147,4 @@ router.get("/password-hint/:id/:role", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

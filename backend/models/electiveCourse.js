@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const electiveCourseSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
@@ -7,4 +7,4 @@ const electiveCourseSchema = new mongoose.Schema({
 });
 
 const ElectiveCourse = mongoose.model("ElectiveCourse", electiveCourseSchema);
-export default ElectiveCourse;
+module.exports = ElectiveCourse;

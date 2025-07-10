@@ -1,6 +1,7 @@
-import express from "express";
-import CourseFacultyAssignment from "../models/courseFacultyAssignment.js";
-import { requireRole, requireRoles, verifyToken } from "../middleware/auth.js";
+const express = require("express");
+const CourseFacultyAssignment = require("../models/courseFacultyAssignment");
+const { requireRole, requireRoles, verifyToken } = require("../middleware/auth");
+
 
 const router = express.Router();
 
@@ -152,35 +153,45 @@ router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Delete assignments by course (for cascading delete)
-router.delete("/course/:courseId",verifyToken, requireRole("admin"), async (req, res) => {
-  try {
-    const result = await CourseFacultyAssignment.deleteMany({
-      course: req.params.courseId,
-    });
-    res.status(200).json({
-      message: `${result.deletedCount} assignments deleted for course ${req.params.courseId}`,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.delete(
+  "/course/:courseId",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const result = await CourseFacultyAssignment.deleteMany({
+        course: req.params.courseId,
+      });
+      res.status(200).json({
+        message: `${result.deletedCount} assignments deleted for course ${req.params.courseId}`,
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 // Delete assignments by faculty (for cascading delete)
-router.delete("/faculty/:facultyId",verifyToken, requireRole("admin"), async (req, res) => {
-  try {
-    const result = await CourseFacultyAssignment.deleteMany({
-      faculty: req.params.facultyId,
-    });
-    res.status(200).json({
-      message: `${result.deletedCount} assignments deleted for faculty ${req.params.facultyId}`,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.delete(
+  "/faculty/:facultyId",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const result = await CourseFacultyAssignment.deleteMany({
+        faculty: req.params.facultyId,
+      });
+      res.status(200).json({
+        message: `${result.deletedCount} assignments deleted for faculty ${req.params.facultyId}`,
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 // Get assignments by faculty
-router.get("/faculty/:facultyId",verifyToken, async (req, res) => {
+router.get("/faculty/:facultyId", verifyToken, async (req, res) => {
   try {
     const { facultyId } = req.params;
     const removeDup = req.query.removedup === "true";
@@ -226,4 +237,4 @@ router.get("/faculty/:facultyId",verifyToken, async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

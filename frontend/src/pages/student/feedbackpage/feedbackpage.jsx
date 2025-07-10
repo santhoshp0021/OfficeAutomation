@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa";
 import backgroundImage from "../../../assests/Red_Building_Cropped.jpg";
 import HeaderBar from "../../../components/HeaderBar";
 import FooterBar from "../../../components/FooterBar";
 import { useAuth } from "../../../contexts/AuthContext";
-import { apiFetch } from '../../../utils/api';
+import { apiFetch } from "../../../utils/api";
 
 // Styled components
 const fadeIn = keyframes`
@@ -325,7 +325,11 @@ const FeedbackPage = () => {
           try {
             const studentId = currentUser?.studentRef || currentUser?._id;
             const feedbackResponse = await apiFetch(
-              `http://localhost:5000/api/feedback/check/${studentId}/${course._id}/${course?.batch || currentUser?.batch}/${currentUser?.current_semester}`
+              `http://localhost:5000/api/feedback/check/${studentId}/${
+                course._id
+              }/${course?.batch || currentUser?.batch}/${
+                currentUser?.current_semester
+              }`
             );
             if (feedbackResponse.ok) {
               const feedbackData = await feedbackResponse.json();

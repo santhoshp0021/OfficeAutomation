@@ -1,14 +1,21 @@
-import express from "express";
-import Faculty from "../models/faculty.js";
-import User from "../models/user.js";
-import CourseFacultyAssignment from "../models/courseFacultyAssignment.js";
-import ElectiveCourseFacultyAssignment from "../models/electiveCourseFacultyAssignment.js";
-import multer from "multer";
-import { parse } from "csv-parse";
-import fs from "fs";
-import Feedback from "../models/feedback.js";
-import bcrypt from "bcrypt";
-import { verifyToken, requireRole, requireRoles, allowSelfOrAdmin } from "../middleware/auth.js";
+const express = require("express");
+const Faculty = require("../models/faculty.js");
+const User = require("../models/user.js");
+const CourseFacultyAssignment = require("../models/courseFacultyAssignment.js");
+const ElectiveCourseFacultyAssignment = require("../models/electiveCourseFacultyAssignment.js");
+const multer = require("multer");
+const { parse } = require("csv-parse");
+const fs = require("fs");
+const Feedback = require("../models/feedback.js");
+const bcrypt = require("bcrypt");
+
+const {
+  verifyToken,
+  requireRole,
+  requireRoles,
+  allowSelfOrAdmin,
+} = require("../middleware/auth.js");
+
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -24,7 +31,11 @@ router.get("/", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Get faculty by id
-router.get("/:id",verifyToken,requireRoles("faculty", "admin"),allowSelfOrAdmin(Faculty, 'id'),
+router.get(
+  "/:id",
+  verifyToken,
+  requireRoles("faculty", "admin"),
+  allowSelfOrAdmin(Faculty, "id"),
   async (req, res) => {
     try {
       const faculty = await Faculty.findById(req.params.id);
@@ -94,7 +105,12 @@ router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Bulk upload faculties from CSV
-router.post("/upload-csv",verifyToken,requireRole("admin"),upload.single("file"),(req, res) => {
+router.post(
+  "/upload-csv",
+  verifyToken,
+  requireRole("admin"),
+  upload.single("file"),
+  (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -196,7 +212,11 @@ router.post("/upload-csv",verifyToken,requireRole("admin"),upload.single("file")
 );
 
 // Get faculty performance (self-view)
-router.get("/:id/performance",verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
+router.get(
+  "/:id/performance",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
     try {
       const facultyId = String(req.params.id);
       const faculty = await Faculty.findById(facultyId);
@@ -271,58 +291,62 @@ router.get("/:id/performance",verifyToken,requireRoles("admin", "faculty"),async
 );
 
 // Get faculty performance (self-view) along with their course and Batch
-router.get("/:id/performance/course/:courseId/batch/:batch", verifyToken,requireRoles("admin", "faculty"),async (req, res) => {
-    if(req.user.id)
-    try {
-      const facultyId = String(req.params.id);
-      const courseId = String(req.params.courseId);
-      const faculty = await Faculty.findById(facultyId);
-      if (!faculty) {
-        return res.status(404).json({ error: "Faculty not found" });
-      }
-
-      // Get average score
-      const feedbacks = await Feedback.find({
-        faculty: facultyId,
-        course: courseId,
-        batch: req.params.batch,
-      });
-      let avgScore = 0;
-      if (feedbacks.length > 0) {
-        avgScore =
-          feedbacks.reduce((sum, f) => sum + f.score, 0) / feedbacks.length;
-      }
-
-      // Get average ratings for each question
-      let questionRatings = [];
-      let questionTexts = [];
-      if (feedbacks.length > 0) {
-        const questionCount = feedbacks[0].questionRating.length;
-        for (let i = 0; i < questionCount; i++) {
-          const totalRating = feedbacks.reduce((sum, feedback) => {
-            return sum + (feedback.questionRating[i]?.rating || 0);
-          }, 0);
-          questionRatings[i] = totalRating / feedbacks.length;
+router.get(
+  "/:id/performance/course/:courseId/batch/:batch",
+  verifyToken,
+  requireRoles("admin", "faculty"),
+  async (req, res) => {
+    if (req.user.id)
+      try {
+        const facultyId = String(req.params.id);
+        const courseId = String(req.params.courseId);
+        const faculty = await Faculty.findById(facultyId);
+        if (!faculty) {
+          return res.status(404).json({ error: "Faculty not found" });
         }
-        questionTexts = feedbacks[0].questionRating.map((q) => q.question);
-      }
 
-      res.json({
-        faculty: {
-          id: faculty.id,
-          name: faculty.name,
-          designation: faculty.designation,
-        },
-        avgScore,
-        questionRatings,
-        questionTexts,
-        totalFeedbacks: feedbacks.length,
-      });
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: err.message });
-    }
+        // Get average score
+        const feedbacks = await Feedback.find({
+          faculty: facultyId,
+          course: courseId,
+          batch: req.params.batch,
+        });
+        let avgScore = 0;
+        if (feedbacks.length > 0) {
+          avgScore =
+            feedbacks.reduce((sum, f) => sum + f.score, 0) / feedbacks.length;
+        }
+
+        // Get average ratings for each question
+        let questionRatings = [];
+        let questionTexts = [];
+        if (feedbacks.length > 0) {
+          const questionCount = feedbacks[0].questionRating.length;
+          for (let i = 0; i < questionCount; i++) {
+            const totalRating = feedbacks.reduce((sum, feedback) => {
+              return sum + (feedback.questionRating[i]?.rating || 0);
+            }, 0);
+            questionRatings[i] = totalRating / feedbacks.length;
+          }
+          questionTexts = feedbacks[0].questionRating.map((q) => q.question);
+        }
+
+        res.json({
+          faculty: {
+            id: faculty.id,
+            name: faculty.name,
+            designation: faculty.designation,
+          },
+          avgScore,
+          questionRatings,
+          questionTexts,
+          totalFeedbacks: feedbacks.length,
+        });
+      } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: err.message });
+      }
   }
 );
 
-export default router;
+module.exports = router;

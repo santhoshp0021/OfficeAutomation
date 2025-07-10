@@ -1,11 +1,17 @@
-import express from "express";
-import ElectiveStudentAssignment from "../models/electiveStudentAssignment.js";
-import ElectiveCourse from "../models/electiveCourse.js";
-import multer from "multer";
-import { parse } from "csv-parse";
-import fs from "fs";
-import Student from "../models/student.js";
-import { requireRole, requireRoles, verifyToken } from "../middleware/auth.js";
+const express = require("express");
+const ElectiveStudentAssignment = require("../models/electiveStudentAssignment.js");
+const ElectiveCourse = require("../models/electiveCourse.js");
+const multer = require("multer");
+const { parse } = require("csv-parse");
+const fs = require("fs");
+const Student = require("../models/student.js");
+
+const {
+  requireRole,
+  requireRoles,
+  verifyToken,
+} = require("../middleware/auth.js");
+
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -198,4 +204,4 @@ router.get(
   }
 );
 
-export default router;
+module.exports = router;

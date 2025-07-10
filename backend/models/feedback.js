@@ -1,14 +1,29 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
-const questionRatingSchema = new mongoose.Schema({
-  question: { type: String, required: true },
-  rating: { type: Number, min: 1, max: 5, required: true },
-}, { _id: false });
+const questionRatingSchema = new mongoose.Schema(
+  {
+    question: { type: String, required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+  },
+  { _id: false }
+);
 
 const feedbackSchema = new mongoose.Schema({
-  student: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
-  faculty: { type: mongoose.Schema.Types.ObjectId, ref: "Faculty", required: true },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: true,
+  },
+  faculty: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Faculty",
+    required: true,
+  },
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Course",
+    required: true,
+  },
   batch: { type: String, required: true },
   semester: { type: Number, required: true },
   questionRating: [questionRatingSchema],
@@ -17,4 +32,4 @@ const feedbackSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("Feedback", feedbackSchema);
+module.exports = mongoose.model("Feedback", feedbackSchema);

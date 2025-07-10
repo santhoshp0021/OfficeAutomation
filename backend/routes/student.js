@@ -1,11 +1,17 @@
-import express from "express";
-import Student from "../models/student.js";
-import User from "../models/user.js";
-import multer from "multer";
-import { parse } from "csv-parse";
-import fs from "fs";
-import bcrypt from "bcrypt";
-import { verifyToken, requireRole, requireRoles, allowSelfOrAdmin } from "../middleware/auth.js";
+const express = require("express");
+const Student = require("../models/student");
+const User = require("../models/user");
+const multer = require("multer");
+const { parse } = require("csv-parse");
+const fs = require("fs");
+const bcrypt = require("bcrypt");
+
+const {
+  verifyToken,
+  requireRole,
+  requireRoles,
+  allowSelfOrAdmin,
+} = require("../middleware/auth");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -42,7 +48,11 @@ router.get("/", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // get student by id
-router.get("/:id",verifyToken,requireRoles("student", "admin"),allowSelfOrAdmin(Student, 'id'),
+router.get(
+  "/:id",
+  verifyToken,
+  requireRoles("student", "admin"),
+  allowSelfOrAdmin(Student, "id"),
   async (req, res) => {
     try {
       const student = await Student.findById(req.params.id);
@@ -54,21 +64,27 @@ router.get("/:id",verifyToken,requireRoles("student", "admin"),allowSelfOrAdmin(
 );
 
 // update student
-router.put("/:id", verifyToken, requireRoles("admin", "student"), allowSelfOrAdmin(Student, 'id'), async (req, res) => {
-  try {
-    const student = await Student.findByIdAndUpdate(
-      String(req.params.id),
-      req.body,
-      {
-        new: true,
-      }
-    );
-    res.status(200).json({ message: "Student updated", student });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
+router.put(
+  "/:id",
+  verifyToken,
+  requireRoles("admin", "student"),
+  allowSelfOrAdmin(Student, "id"),
+  async (req, res) => {
+    try {
+      const student = await Student.findByIdAndUpdate(
+        String(req.params.id),
+        req.body,
+        {
+          new: true,
+        }
+      );
+      res.status(200).json({ message: "Student updated", student });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 // delete student
 router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
@@ -86,7 +102,10 @@ router.delete("/:id", verifyToken, requireRole("admin"), async (req, res) => {
 });
 
 // Bulk delete students by semester
-router.delete("/semester/:semester",verifyToken,requireRole("admin"),
+router.delete(
+  "/semester/:semester",
+  verifyToken,
+  requireRole("admin"),
   async (req, res) => {
     try {
       const studentsToDelete = await Student.find({
@@ -117,7 +136,12 @@ router.delete("/semester/:semester",verifyToken,requireRole("admin"),
 );
 
 // Bulk upload students from CSV
-router.post("/upload-csv",verifyToken,requireRole("admin"),upload.single("file"),(req, res) => {
+router.post(
+  "/upload-csv",
+  verifyToken,
+  requireRole("admin"),
+  upload.single("file"),
+  (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -220,4 +244,5 @@ router.post("/upload-csv",verifyToken,requireRole("admin"),upload.single("file")
   }
 );
 
-export default router;
+
+module.exports = router;
