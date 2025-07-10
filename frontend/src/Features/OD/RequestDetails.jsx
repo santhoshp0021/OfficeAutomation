@@ -16,7 +16,8 @@ import {
   TbUserX,
   TbX,
 } from "react-icons/tb";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { useState } from "react";
 import Spinner from "../../ui/Spinner";
 import ConfirmationModal from "../../ui/ConfirmationModal";
@@ -28,7 +29,7 @@ export default function RequestDetails({
   close,
   edit,
 }) {
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
@@ -280,7 +281,8 @@ export default function RequestDetails({
         )}
 
         {(!isHod || edit || data.status !== "Pending") &&
-          data.status !== "Approved" && edit && (
+          data.status !== "Approved" &&
+          edit && (
             <div className="flex flex-col w-full gap-2 mt-3">
               <input
                 type="file"

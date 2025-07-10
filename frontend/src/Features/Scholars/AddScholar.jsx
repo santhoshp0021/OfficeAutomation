@@ -4,7 +4,8 @@ import FormRow from "./FormRow";
 import { toast, Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import Spinner from "../../ui/Spinner";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { useNavigate } from "react-router-dom";
 
 const phoneNoPattern = /^(?:(?:\+|0{0,2})91(\s*[\\-]\s*)?|[0]?)?[789]\d{9}$/;
@@ -12,7 +13,7 @@ const phoneNoPattern = /^(?:(?:\+|0{0,2})91(\s*[\\-]\s*)?|[0]?)?[789]\d{9}$/;
 export default function AddScholar({ formData = {}, onClose, onUpdate }) {
   const navigate = useNavigate();
   const { _id: editId, contactInfo = {}, ...data } = formData;
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   // console.log("User data in AddScholar:", user);
   const { phone, email } = contactInfo;
   const formatDateForInput = (isoString) =>

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Login({ onLogin }) {
   const [form, setForm] = useState({ email: "", password: "" });
-  const { login } = UserData();
+  const { login } = useAuth();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };

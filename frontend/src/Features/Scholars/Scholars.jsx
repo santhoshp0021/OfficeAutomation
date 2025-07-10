@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import Spinner from "../../ui/Spinner";
 import Modal from "../../ui/Modal";
 import AddScholar from "./AddScholar";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 function Scholars() {
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
 
   const isFaculty = user.role === "faculty";
   const isHod = user.role === "hod";
@@ -25,7 +25,7 @@ function Scholars() {
     phone: true,
     areaOfResearch: true,
     supervisor: true,
-    actions: !(user.role === 'admin'),
+    actions: !(user.role === "admin"),
     semester: true,
     program: true,
   });
@@ -392,19 +392,25 @@ function Scholars() {
                     </td>
                   )}
                   {columnVisibility.semester && (
-                    <td className="py-1 px-2 text-center">{scholar.semester}</td>
+                    <td className="py-1 px-2 text-center">
+                      {scholar.semester}
+                    </td>
                   )}
                   {columnVisibility.program && (
                     <td className="py-1 px-2 text-center">{scholar.program}</td>
                   )}
                   <td className="py-1 px-2 text-center">
                     {scholar.dateOfJoining
-                      ? new Date(scholar.dateOfJoining).toLocaleDateString("en-GB")
+                      ? new Date(scholar.dateOfJoining).toLocaleDateString(
+                          "en-GB"
+                        )
                       : "-"}
                   </td>
                   <td className="py-1 px-2 text-center">
                     {scholar.dateOfCompletion
-                      ? new Date(scholar.dateOfCompletion).toLocaleDateString("en-GB")
+                      ? new Date(scholar.dateOfCompletion).toLocaleDateString(
+                          "en-GB"
+                        )
                       : "-"}
                   </td>
                   {!isFaculty && columnVisibility.supervisor && (
@@ -532,7 +538,9 @@ function Scholars() {
                     </td>
                   )}
                   {columnVisibility.semester && (
-                    <td className="py-1 px-2 text-center">{scholar.semester}</td>
+                    <td className="py-1 px-2 text-center">
+                      {scholar.semester}
+                    </td>
                   )}
                   {columnVisibility.program && (
                     <td className="py-1 px-2 text-center">{scholar.program}</td>

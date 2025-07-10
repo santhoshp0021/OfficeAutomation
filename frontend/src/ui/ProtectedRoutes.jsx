@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
-import { UserData } from "../context/UserContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function ProtectedRoutes({ children }) {
-  const { user } = UserData();
-    // console.log(user);
+  const { currentUser: user } = useAuth();
+  // console.log(user);
   if (!user) {
     return <Navigate to="/login" replace />;
   }

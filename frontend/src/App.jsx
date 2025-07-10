@@ -1,11 +1,16 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import "./App.css";
 
 // Contexts
 import { AuthProvider } from "./contexts/AuthContext";
-import { UserData } from "./context/UserContext";
-
+import { useAuth } from "./contexts/AuthContext";
 // Notifications
 import { Toaster } from "react-hot-toast";
 
@@ -75,7 +80,7 @@ import FacultySelfPerformance from "./pages/faculty/FacultySelfPerformance";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
 
   return (
     <AuthProvider>
@@ -154,7 +159,10 @@ function App() {
             <Route path="/publication/add" element={<AddPublication />} />
             <Route path="/CR" element={<GenerateCR />} />
             <Route path="/CR/view" element={<AllCRReports />} />
-            <Route path="/CR/fullReport/:reportId" element={<FullReport user={user} />} />
+            <Route
+              path="/CR/fullReport/:reportId"
+              element={<FullReport user={user} />}
+            />
             <Route
               path="/faculty/performance"
               element={
@@ -170,7 +178,10 @@ function App() {
             path="/admin/dashboard"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <AdminDashboard />
                 </AdminLayout>
               </ProtectedRoute>
@@ -180,7 +191,10 @@ function App() {
             path="/admin/csvupload"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <CSVUpload />
                 </AdminLayout>
               </ProtectedRoute>
@@ -190,7 +204,10 @@ function App() {
             path="/admin/assigncourses"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <AssignCourses />
                 </AdminLayout>
               </ProtectedRoute>
@@ -200,7 +217,10 @@ function App() {
             path="/admin/assign-elective-faculties"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <AssignElectiveFaculties />
                 </AdminLayout>
               </ProtectedRoute>
@@ -210,7 +230,10 @@ function App() {
             path="/admin/faculties"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <FacultyTable />
                 </AdminLayout>
               </ProtectedRoute>
@@ -220,7 +243,10 @@ function App() {
             path="/admin/grievances"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <Grievances />
                 </AdminLayout>
               </ProtectedRoute>
@@ -230,7 +256,10 @@ function App() {
             path="/admin/courses"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <Courses />
                 </AdminLayout>
               </ProtectedRoute>
@@ -240,7 +269,10 @@ function App() {
             path="/admin/students"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <Students />
                 </AdminLayout>
               </ProtectedRoute>
@@ -250,7 +282,10 @@ function App() {
             path="/admin/elective-courses"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <AllElectiveCourses />
                 </AdminLayout>
               </ProtectedRoute>
@@ -260,7 +295,10 @@ function App() {
             path="/admin/elective-student-assignments"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+                <AdminLayout
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                >
                   <ElectiveCoursesStudentAssignment />
                 </AdminLayout>
               </ProtectedRoute>

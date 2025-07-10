@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { useNavigate } from "react-router-dom";
 
 export default function Signup({ onSuccess }) {
@@ -20,7 +21,7 @@ export default function Signup({ onSuccess }) {
     natureOfAppointment: "",
   });
   const [step, setStep] = useState(1); // 1: basic, 2: faculty details
-  const { signup } = UserData();
+  const { signup } = useAuth();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };

@@ -4,13 +4,19 @@ import FormRow from "../Scholars/FormRow";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import Spinner from "../../ui/Spinner";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { useNavigate } from "react-router-dom";
 
-export default function AddPublication({ formData = {}, onClose, onUpdate, onFetchPublications }) {
+export default function AddPublication({
+  formData = {},
+  onClose,
+  onUpdate,
+  onFetchPublications,
+}) {
   const navigate = useNavigate();
   const { _id: editId, ...data } = formData;
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const editData = Object.keys(formData).length ? data : null;
   const isEditing = Boolean(editId);
   const { register, reset, formState, handleSubmit } = useForm({
@@ -42,9 +48,15 @@ export default function AddPublication({ formData = {}, onClose, onUpdate, onFet
     } catch (err) {
       console.error(err.response?.data || err.message);
       if (err.response?.data?.message?.includes("Duplicate citation_id")) {
-        toast.error("A publication with this DOI already exists. Please use a different DOI or leave it empty.");
+        toast.error(
+          "A publication with this DOI already exists. Please use a different DOI or leave it empty."
+        );
       } else {
-        toast.error(err.response?.data?.message || err.message || "Failed to add new publication");
+        toast.error(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to add new publication"
+        );
       }
     } finally {
       setIsLoading(false);
@@ -76,9 +88,13 @@ export default function AddPublication({ formData = {}, onClose, onUpdate, onFet
     } catch (error) {
       console.error("Error updating publication:", error);
       if (error.response?.data?.message?.includes("Duplicate citation_id")) {
-        toast.error("A publication with this DOI already exists. Please use a different DOI or leave it empty.");
+        toast.error(
+          "A publication with this DOI already exists. Please use a different DOI or leave it empty."
+        );
       } else {
-        toast.error(error.response?.data?.message || "Failed to update Publication");
+        toast.error(
+          error.response?.data?.message || "Failed to update Publication"
+        );
       }
     } finally {
       setIsLoading(false);
@@ -111,7 +127,10 @@ export default function AddPublication({ formData = {}, onClose, onUpdate, onFet
       }
     } catch (error) {
       console.error("Error fetching publications:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch publications from Google Scholar");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch publications from Google Scholar"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -165,20 +184,30 @@ export default function AddPublication({ formData = {}, onClose, onUpdate, onFet
           />
         </FormRow>
 
-        <FormRow label="publicationDate" error={errors?.publicationDate?.message}>
+        <FormRow
+          label="publicationDate"
+          error={errors?.publicationDate?.message}
+        >
           <input
             name="publicationDate"
             type="date"
             className="w-full p-2 rounded bg-gray-100 border border-gray-300"
-            {...register("publicationDate", { required: "This is required field" })}
+            {...register("publicationDate", {
+              required: "This is required field",
+            })}
           />
         </FormRow>
 
-        <FormRow label="journalOrPublisher" error={errors?.journalOrPublisher?.message}>
+        <FormRow
+          label="journalOrPublisher"
+          error={errors?.journalOrPublisher?.message}
+        >
           <input
             name="journalOrPublisher"
             className="w-full p-2 rounded bg-gray-100 border border-gray-300"
-            {...register("journalOrPublisher", { required: "This is required field" })}
+            {...register("journalOrPublisher", {
+              required: "This is required field",
+            })}
           />
         </FormRow>
 

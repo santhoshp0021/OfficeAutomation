@@ -1,10 +1,10 @@
 import React from "react";
 import Sidebar from "../../ui/Sidbear";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Dashboard() {
-  const { user } = UserData();
-  console.log(user)
+  const { currentUser: user } = useAuth();
+  console.log(user);
   return (
     <div className="flex flex-col items-center mt-20">
       <h1 className="text-3xl font-bold capitalize text-center mb-6">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import jsPDF from "jspdf";
 import logoPngPath from "../../assets/Anna_University_Logo.png";
 import cseLogoPath from "../../assets/CSE_logo.png";
@@ -15,7 +16,7 @@ function groupBy(arr, keyFn) {
   }, {});
 }
 export default function ConsolidationReportFacultyAnalytics() {
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const { facultyName } = useParams();
   const [faculty, setFaculty] = useState([]);
   const [scholars, setScholars] = useState([]);

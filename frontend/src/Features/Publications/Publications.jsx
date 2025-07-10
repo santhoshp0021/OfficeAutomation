@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import Spinner from "../../ui/Spinner";
 import Modal from "../../ui/Modal";
 import AddPublication from "./AddPublication";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 function Publications() {
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const isAdmin = user.designation === "Admin";
   const [publicationsList, setPublicationsList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);

@@ -14,33 +14,62 @@ import {
   TbLogin2,
 } from "react-icons/tb";
 import { NavLink } from "react-router-dom";
-import { UserData } from "../context/UserContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
-  const { user, logout } = UserData();
+  const { currentUser: user, logout } = useAuth();
   const isFaculty = user?.role === "faculty";
   const isAdmin = user?.role === "admin";
 
   const fullLinks = [
     { name: "Home", path: "/", icon: <TbHome />, roles: ["all"] },
     { name: "Scholars", path: "scholars", icon: <TbUser />, roles: ["all"] },
-    { name: "Add Scholar", path: "scholar/add", icon: <TbUserPlus />, roles: ["faculty"] },
-    { name: "Publications", path: "publications", icon: <TbBook />, roles: ["all"] },
-    { name: "Add Publication", path: "publication/add", icon: <TbBookUpload />, roles: ["faculty"] },
-    { name: "OD Request", path: "OD/new", icon: <TbFilePlus />, roles: ["faculty"] },
+    {
+      name: "Add Scholar",
+      path: "scholar/add",
+      icon: <TbUserPlus />,
+      roles: ["faculty"],
+    },
+    {
+      name: "Publications",
+      path: "publications",
+      icon: <TbBook />,
+      roles: ["all"],
+    },
+    {
+      name: "Add Publication",
+      path: "publication/add",
+      icon: <TbBookUpload />,
+      roles: ["faculty"],
+    },
+    {
+      name: "OD Request",
+      path: "OD/new",
+      icon: <TbFilePlus />,
+      roles: ["faculty"],
+    },
     { name: "OD History", path: "OD", icon: <TbHistory />, roles: ["all"] },
     // { name: "Generate CR", path: "cr", icon: <TbReport />, roles: ["all"] },
     { name: "View CR", path: "CR/view", icon: <TbReport />, roles: ["all"] },
-    { name: "Consolidation Report", path: "/admin/consolidation-report/menu", icon: <TbReport />, roles: ["admin"] },
+    {
+      name: "Consolidation Report",
+      path: "/admin/consolidation-report/menu",
+      icon: <TbReport />,
+      roles: ["admin"],
+    },
     ...(user
       ? [{ name: "Logout", path: "/", icon: <TbLogout2 />, roles: ["all"] }]
       : [
           { name: "Login", path: "/login", icon: <TbLogin2 />, roles: ["all"] },
-          { name: "Signup", path: "/signup", icon: <TbUserPlus />, roles: ["all"] },
+          {
+            name: "Signup",
+            path: "/signup",
+            icon: <TbUserPlus />,
+            roles: ["all"],
+          },
         ]),
   ];
-
 
   const links = fullLinks.filter((link) => {
     if (link.name === "Generate CR" && isAdmin) return false;
@@ -50,7 +79,6 @@ export default function Sidebar() {
     return false;
   });
 
-
   function handleClose() {
     setOpen((open) => !open);
   }
@@ -59,7 +87,7 @@ export default function Sidebar() {
       className={`fixed left-0 top-0 h-full z-[1000] ${
         open ? "w-72" : "w-10"
       } transition-all duration-300`}
-      style={{ background: open ? '#145DA0' : 'transparent' }}
+      style={{ background: open ? "#145DA0" : "transparent" }}
     >
       <div
         className={`${

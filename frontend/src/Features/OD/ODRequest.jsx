@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import axios from "axios";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function ODRequestForm() {
   const {
@@ -13,7 +13,7 @@ export default function ODRequestForm() {
     reset,
     formState: { errors },
   } = useForm();
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const [type, setType] = useState("Conduct");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");

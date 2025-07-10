@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { UserData } from "../../context/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 export default function AllCRReports() {
-  const { user } = UserData();
+  const { currentUser: user } = useAuth();
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
