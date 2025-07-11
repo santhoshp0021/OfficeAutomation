@@ -5,7 +5,7 @@ const {
   requireRoles,
   verifyToken,
 } = require("../middleware/auth");
-const faculty = require("../models/faculty");
+const faculty = require("../models/Faculty");
 
 const router = express.Router();
 

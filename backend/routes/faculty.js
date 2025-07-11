@@ -1,6 +1,6 @@
 const express = require("express");
-const Faculty = require("../models/faculty.js");
-const User = require("../models/user.js");
+const Faculty = require("../models/Faculty.js");
+const User = require("../models/User.js");
 const CourseFacultyAssignment = require("../models/courseFacultyAssignment.js");
 const ElectiveCourseFacultyAssignment = require("../models/electiveCourseFacultyAssignment.js");
 const multer = require("multer");
@@ -15,7 +15,6 @@ const {
   requireRoles,
   allowSelfOrAdmin,
 } = require("../middleware/auth.js");
-
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });

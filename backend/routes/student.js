@@ -1,6 +1,6 @@
 const express = require("express");
 const Student = require("../models/student");
-const User = require("../models/user");
+const User = require("../models/User");
 const multer = require("multer");
 const { parse } = require("csv-parse");
 const fs = require("fs");
@@ -243,6 +243,5 @@ router.post(
     processFile();
   }
 );
-
 
 module.exports = router;

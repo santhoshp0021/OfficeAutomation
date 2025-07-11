@@ -1,15 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/user");
+const User = require("../models/User");
 const Student = require("../models/student");
-const Faculty = require("../models/faculty");
+const Faculty = require("../models/Faculty");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const { register } = require("../controllers/authController");
 
-const { register } = require('../controllers/authController');
-
-router.post('/register', register);
+router.post("/register", register);
 // Utility to calculate current semester
 function calculateSemester(joinYear) {
   const now = new Date();

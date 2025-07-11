@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 const Student = require("../models/student.js");
-const Faculty = require("../models/faculty.js");
+const Faculty = require("../models/Faculty.js");
 
-const User = require("../models/user");
+const User = require("../models/User.js");
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -14,7 +14,7 @@ const verifyToken = async (req, res, next) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    req.user = user; 
+    req.user = user;
     next();
   } catch (err) {
     return res.status(403).json({ error: "Invalid token" });

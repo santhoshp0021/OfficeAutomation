@@ -1,14 +1,13 @@
 const express = require("express");
 const ElectiveCourseFacultyAssignment = require("../models/electiveCourseFacultyAssignment.js");
 const ElectiveCourse = require("../models/electiveCourse.js");
-const Faculty = require("../models/faculty.js");
+const Faculty = require("../models/Faculty.js");
 
 const {
   requireRole,
   requireRoles,
   verifyToken,
 } = require("../middleware/auth.js");
-
 
 const router = express.Router();
 
