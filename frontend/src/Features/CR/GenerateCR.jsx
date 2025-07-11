@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 import { toast } from "react-hot-toast";
@@ -89,16 +89,16 @@ export default function GenerateCR() {
       setLoading(false);
     } else if (user?.userId || user?.facultyId || user?._id) {
       const facultyId = user.userId || user.facultyId || user._id;
-      axios
-        .get(`http://localhost:5000/api/faculty/${facultyId}`)
-        .then((res) => {
-          setFacultyProfile(res.data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          toast.error("Failed to fetch faculty profile");
-          setLoading(false);
-        });
+      apiAxios()
+  .get(`/faculty/${facultyId}`)
+  .then((res) => {
+    setFacultyProfile(res.data);
+    setLoading(false);
+  })
+  .catch((err) => {
+    toast.error("Failed to fetch faculty profile");
+    setLoading(false);
+  });
     } else {
       setLoading(false);
     }
@@ -106,9 +106,7 @@ export default function GenerateCR() {
 
   const fetchPendingCRs = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/pending/hod`, {
-        headers: { "x-user-email": user.email },
-      });
+      const response = await apiAxios().get("/pending/hod");
       setPendingCRs(response.data);
     } catch (err) {
       toast.error("Failed to fetch pending CR requests");
@@ -117,9 +115,7 @@ export default function GenerateCR() {
 
   const handleEditCR = async (crId) => {
     try {
-      const response = await axios.get(`${API_BASE}/report/${crId}`, {
-        headers: { "x-user-email": user.email },
-      });
+      const response = await apiAxios().get(`/report/${crId}`);
       const crData = response.data;
       crData.hodSection = crData.hodSection || {
         performance: {},
@@ -137,9 +133,7 @@ export default function GenerateCR() {
 
   const handleViewCR = async (crId) => {
     try {
-      const response = await axios.get(`${API_BASE}/report/${crId}`, {
-        headers: { "x-user-email": user.email },
-      });
+      const response = await apiAxios().get(`/report/${crId}`);
       const crData = response.data;
       crData.hodSection = crData.hodSection || {
         performance: {},
@@ -226,9 +220,7 @@ export default function GenerateCR() {
           },
         };
 
-        await axios.post(`${API_BASE}/${selectedCR._id}/hod-section`, hodData, {
-          headers: { "x-user-email": user.email },
-        });
+        await apiAxios().post(`/${selectedCR._id}/hod-section`, hodData);
 
         toast.success("HOD section submitted successfully!");
         fetchPendingCRs();
@@ -266,13 +258,7 @@ export default function GenerateCR() {
           },
         };
 
-        await axios.post(
-          `${API_BASE}/${user.userId || user.facultyId || user._id}`,
-          facultyData,
-          {
-            headers: { "x-user-email": user.email },
-          }
-        );
+        await apiAxios().post(`/${user.userId || user.facultyId || user._id}`, facultyData);
         toast.success("CR Report submitted for HOD review!");
       }
     } catch (err) {

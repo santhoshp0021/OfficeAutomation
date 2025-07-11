@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useForm } from "react-hook-form";
 import FormRow from "../Scholars/FormRow";
 import toast from "react-hot-toast";
@@ -29,15 +29,8 @@ export default function AddPublication({
   async function handleAddPublication(payload) {
     try {
       setIsLoading(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/publications",
-        payload,
-        {
-          headers: {
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const res = await apiAxios().post("/publications", payload);
+
       toast.success("Publication added successfully");
       reset();
       if (onClose) {
@@ -66,15 +59,8 @@ export default function AddPublication({
   async function handleUpdate(payload) {
     try {
       setIsLoading(true);
-      const response = await axios.put(
-        `http://localhost:5000/api/publications/${editId}`,
-        payload,
-        {
-          headers: {
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const response = await apiAxios().put(`/publications/${editId}`, payload);
+
       toast.success("Updated Publication Successfully");
       reset();
       if (onUpdate) {
@@ -108,14 +94,10 @@ export default function AddPublication({
     }
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `http://localhost:5000/api/publications/fetch-and-store?authorId=${authorId}`,
-        {
-          headers: {
-            "x-user-email": user.email,
-          },
-        }
+      const response = await apiAxios().get(
+        `/publications/fetch-and-store?authorId=${authorId}`
       );
+
       toast.success("Publications fetched successfully");
       reset();
       if (onClose) {

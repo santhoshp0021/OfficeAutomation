@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import toast from "react-hot-toast";
 import Spinner from "../../ui/Spinner";
 import Modal from "../../ui/Modal";
@@ -35,14 +35,8 @@ function Scholars() {
     const fetchScholars = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(
-          "http://localhost:5000/api/pgscholars",
-          {
-            headers: {
-              "x-user-email": user.email,
-            },
-          }
-        );
+        const response = await apiAxios().get("/pgscholars");
+
         console.log(response.data);
         setScholarsList(response.data);
       } catch (error) {
@@ -65,11 +59,8 @@ function Scholars() {
   const deleteScholar = async (id) => {
     try {
       setIsLoading(true);
-      await axios.delete(`http://localhost:5000/api/pgscholars/${id}`, {
-        headers: {
-          "x-user-email": user.email,
-        },
-      });
+      await apiAxios().delete(`/pgscholars/${id}`);
+
       setScholarsList((prev) => prev.filter((scholar) => scholar._id !== id));
       toast.success("Scholar details deleted successfully");
     } catch (error) {

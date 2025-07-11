@@ -13,7 +13,11 @@ const {
   downloadCRPDF,
   deleteReport,
 } = require("../controllers/CRController");
-const { restrictTo } = require("../middleware/roleAccess");
+const {
+  verifyToken,
+  requireRole,
+  requireRoles,
+} = require("../middleware/auth");
 const CRReport = require("../models/CRReport");
 const Faculty = require("../models/Faculty");
 
@@ -28,13 +32,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.get("/", restrictTo("faculty", "admin", "hod"), getAllReports);
+router.get("/", verifyToken, requireRoles("faculty", "admin", "hod"), getAllReports);
 // Get or create CR report for a faculty (faculty or HOD)
-router.get("/:facultyId", restrictTo("faculty"), getOrCreateCRReport);
+router.get("/:facultyId", verifyToken, requireRole("faculty"), getOrCreateCRReport);
 
 router.get(
   "/report/:reportId",
-  restrictTo("faculty", "hod","admin"),
+  verifyToken, requireRoles("faculty", "hod","admin"),
   async (req, res) => {
     try {
       const report = await CRReport.findById(req.params.reportId);
@@ -63,7 +67,7 @@ router.get(
 // Update self-assessment (faculty only)
 router.post(
   "/:reportId/self-assessment",
-  restrictTo("faculty"),
+  verifyToken, requireRole("faculty"),
   updateSelfAssessment
 );
 
@@ -71,7 +75,7 @@ router.patch("/:reportId/update-full", updateFull);
 
 router.post(
   "/:reportId/self-assessment/attachments",
-  restrictTo("faculty"),
+  verifyToken, requireRole("faculty"),
   upload.array("attachments"),
   async (req, res) => {
     try {
@@ -107,16 +111,16 @@ router.post(
 );
 
 // Update HOD section (HOD only)
-router.post("/:reportId/hod-section", restrictTo("hod"), updateHODSection);
+router.post("/:reportId/hod-section", verifyToken, requireRole("hod"), updateHODSection);
 
 // Finalize report (HOD only)
-router.post("/:reportId/finalize", restrictTo("hod"), finalizeReport);
+router.post("/:reportId/finalize", verifyToken, requireRole("hod"), finalizeReport);
 
 // Download final report (faculty or HOD)
-router.get("/:reportId/download", restrictTo("faculty", "hod","admin"), downloadCRPDF);
+router.get("/:reportId/download", verifyToken, requireRoles("faculty", "hod","admin"), downloadCRPDF);
 
 // List all CRs    HOD review (HOD only)
-router.get("/pending/hod", restrictTo("hod"), async (req, res) => {
+router.get("/pending/hod", verifyToken, requireRole("hod"), async (req, res) => {
   try {
     const CRReport = require("../models/CRReport");
     const reports = await CRReport.find({ status: "pending_hod_review" });
@@ -126,5 +130,5 @@ router.get("/pending/hod", restrictTo("hod"), async (req, res) => {
   }
 });
 
-router.delete("/:reportId",restrictTo("faculty"),deleteReport);
+router.delete("/:reportId",verifyToken, requireRole("faculty"),deleteReport);
 module.exports = router;

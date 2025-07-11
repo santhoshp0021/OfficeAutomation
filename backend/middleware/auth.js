@@ -2,16 +2,23 @@ const jwt = require("jsonwebtoken");
 const Student = require("../models/student.js");
 const Faculty = require("../models/faculty.js");
 
-const verifyToken = (req, res, next) => {
+const User = require("../models/user");
+
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ error: "No token provided" });
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Invalid token" });
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    req.user = user; 
     next();
-  });
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
 };
 
 const requireRole = (role) => (req, res, next) => {

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -21,12 +21,11 @@ export default function RequestList() {
           ? "http://localhost:5000/api/odrequests"
           : `http://localhost:5000/api/odrequests/user/${user.userId}`;
       try {
-        const res = await axios.get(api, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-user-email": user.email,
-          },
-        });
+          const res = await apiAxios().get(api, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
         setRequests(res.data);
       } catch {
         toast.error("Failed to load requests");
@@ -106,16 +105,12 @@ export default function RequestList() {
 
   const handleDownload = async (id) => {
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/odrequests/${id}/generate-letter`,
-        {
-          responseType: "blob",
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const res = await apiAxios().get(
+          `/odrequests/${id}/generate-letter`,
+          {
+            responseType: "blob", // This is required for file downloads
+          }
+        );
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

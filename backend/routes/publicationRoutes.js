@@ -8,14 +8,18 @@ const {
   fetchPublications,
   fetchAndStorePublications
 } = require('../controllers/publicationController');
-const { restrictTo } = require('../middleware/roleAccess');  
+const {
+  verifyToken,
+  requireRole,
+  requireRoles,
+} = require("../middleware/auth");
 
 // Route: /api/publications
-router.post('/', restrictTo('faculty'), addPublication);
-router.get('/', restrictTo('faculty','hod', 'admin'), getAllPublications);
-router.put('/:id', restrictTo('faculty'), updatePublication);
-router.delete('/:id', restrictTo('faculty'), deletePublication);
-router.get('/fetch', restrictTo('faculty'), fetchPublications);
-router.get('/fetch-and-store', restrictTo('faculty'), fetchAndStorePublications);
+router.post('/', verifyToken, requireRole('faculty'), addPublication);
+router.get('/', verifyToken, requireRoles('faculty','hod', 'admin'), getAllPublications);
+router.put('/:id', verifyToken, requireRole('faculty'), updatePublication);
+router.delete('/:id', verifyToken, requireRole('faculty'), deletePublication);
+router.get('/fetch', verifyToken, requireRole('faculty'), fetchPublications);
+router.get('/fetch-and-store', verifyToken, requireRole('faculty'), fetchAndStorePublications);
 
 module.exports = router;

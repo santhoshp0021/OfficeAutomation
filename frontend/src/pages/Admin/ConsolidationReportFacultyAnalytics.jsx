@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 import jsPDF from "jspdf";
@@ -41,18 +41,10 @@ export default function ConsolidationReportFacultyAnalytics() {
       setLoading(true);
       try {
         const [facRes, schRes, odRes, pubRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/faculty", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/pgscholars", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/odrequests", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/publications", {
-            headers: { "x-user-email": user.email },
-          }),
+          apiAxios().get("/faculty"),
+          apiAxios().get("/pgscholars"),
+          apiAxios().get("/odrequests"),
+          apiAxios().get("/publications"),
         ]);
         setFaculty(facRes.data);
         setScholars(schRes.data);
@@ -71,9 +63,7 @@ export default function ConsolidationReportFacultyAnalytics() {
     async function fetchCRReports() {
       setLoadingCR(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/crreport", {
-          headers: { "x-user-email": user.email },
-        });
+        const res = await apiAxios().get("/crreport");
         setCrReports(res.data.reports || []);
       } catch (err) {
         setCrReports([]);

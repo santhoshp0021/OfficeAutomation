@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import toast from "react-hot-toast";
 import Spinner from "../../ui/Spinner";
 import Modal from "../../ui/Modal";
@@ -20,14 +20,8 @@ function Publications() {
     const fetchPublications = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(
-          "http://localhost:5000/api/publications",
-          {
-            headers: {
-              "x-user-email": user.email,
-            },
-          }
-        );
+        const response = await apiAxios().get("/publications");
+
         setPublicationsList(response.data);
       } catch (error) {
         console.error("Error fetching publications:", error);
@@ -51,11 +45,8 @@ function Publications() {
   const deletePublication = async (id) => {
     try {
       setIsLoading(true);
-      await axios.delete(`http://localhost:5000/api/publications/${id}`, {
-        headers: {
-          "x-user-email": user.email,
-        },
-      });
+      await apiAxios().delete(`/publications/${id}`);
+
       setPublicationsList((prev) =>
         prev.filter((publication) => publication._id !== id)
       );

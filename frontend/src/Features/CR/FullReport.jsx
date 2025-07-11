@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import axios from "axios";
 import HODPart1Performance from "./HODPart1Performance";
 import HODPart2Assessment from "./HODPart2Assessment";
 import FacultyPart3Potential from "./FacultyPart3Potential";
@@ -10,6 +9,7 @@ import FacultySignatures from "./FacultySignatures";
 import HODSignaturesPart1 from "./HODSignaturesPart1";
 import HODSignaturesPart2 from "./HODSignaturesPart2";
 import FacultyAttachments from "./FacultyAttachments";
+import { apiAxios } from "../../utils/api";
 export default function FullReport({ user }) {
   const { reportId } = useParams();
   const testFacultyForm = {
@@ -168,12 +168,7 @@ export default function FullReport({ user }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/crreport/report/${reportId}`,
-          {
-            headers: { "x-user-email": user.email },
-          }
-        );
+        const res = await apiAxios().get(`/crreport/report/${reportId}`);
         const report = res.data;
         console.log("Fetched report:", report);
 
@@ -255,18 +250,16 @@ export default function FullReport({ user }) {
       const id = faculty?._id || faculty?.userId;
       if (!email && !id) return; // Don't fetch if not ready
 
-      let api;
+      let apiUrl;
       if (email) {
-        api = `http://localhost:5000/api/odrequests/user/email/${email}`;
+        apiUrl = `http://localhost:5000/api/odrequests/user/email/${email}`;
       } else if (id) {
-        api = `http://localhost:5000/api/odrequests/user/${id}`;
+        apiUrl = `http://localhost:5000/api/odrequests/user/${id}`;
       } else {
         return;
       }
       try {
-        const res = await axios.get(api, {
-          headers: { "x-user-email": user.email },
-        });
+        const res = await apiAxios().get(apiUrl);
         setOdRequests(res.data || []);
         // Collect all supporting documents from OD requests
         const odDocs = (res.data || []).flatMap((r) =>
@@ -342,11 +335,7 @@ export default function FullReport({ user }) {
 
   const handleFinalize = async () => {
     try {
-      await axios.post(
-        `http://localhost:5000/api/crreport/${reportId}/finalize`,
-        {},
-        { headers: { "x-user-email": user.email } }
-      );
+      await apiAxios().post(`/crreport/${reportId}/finalize`, {});
       toast.success("Report finalized");
     } catch (err) {
       toast.error("Failed to finalize report");
@@ -404,16 +393,15 @@ export default function FullReport({ user }) {
           const formData = new FormData();
           newFiles.forEach((f) => formData.append("attachments", f.file));
 
-          const uploadRes = await axios.post(
-            `http://localhost:5000/api/crreport/${reportId}/self-assessment/attachments`,
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-                "x-user-email": user.email,
-              },
-            }
-          );
+          const uploadRes = await apiAxios().post(
+  `/crreport/${reportId}/self-assessment/attachments`,
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
 
           const uploaded = uploadRes.data?.selfAssessment?.attachments || [];
 
@@ -445,23 +433,21 @@ export default function FullReport({ user }) {
         // attachments: updatedAttachments,
       };
       console.log(form, selfAssessmentOnly);
-      await axios.patch(
-        `http://localhost:5000/api/crreport/${reportId}/update-full`,
-        {
-          selfAssessment: selfAssessmentOnly,
-          hodSection: {
-            performance: form.hodPart1,
-            potential: form.hodPart2,
-          },
-          status: isFaculty ? "faculty-filled" : form.status || "draft",
-          period: form.period,
-          facultySignature: form.facultySignature,
-          facultySignatureDate: form.facultySignatureDate,
-        },
-        {
-          headers: { "x-user-email": user.email },
-        }
-      );
+      await apiAxios().patch(
+  `/crreport/${reportId}/update-full`,
+  {
+    selfAssessment: selfAssessmentOnly,
+    hodSection: {
+      performance: form.hodPart1,
+      potential: form.hodPart2,
+    },
+    status: isFaculty ? "faculty-filled" : form.status || "draft",
+    period: form.period,
+    facultySignature: form.facultySignature,
+    facultySignatureDate: form.facultySignatureDate,
+  }
+);
+
 
       toast.success("CR Report saved successfully");
 

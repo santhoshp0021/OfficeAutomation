@@ -1,4 +1,5 @@
 const express = require("express");
+const router = express.Router();
 const User = require("../models/user");
 const Student = require("../models/student");
 const Faculty = require("../models/faculty");
@@ -6,109 +7,104 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 
-const router = express.Router();
+const { register } = require('../controllers/authController');
 
+router.post('/register', register);
+// Utility to calculate current semester
 function calculateSemester(joinYear) {
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1; // 1-based month
-
-  // Treat July of join year as semester 1
-  const joinStart = new Date(joinYear, 6); // July = month 6 (0-based)
+  const joinStart = new Date(joinYear, 6); // July
   const monthsElapsed =
     (now.getFullYear() - joinStart.getFullYear()) * 12 +
     (now.getMonth() - joinStart.getMonth());
-
-  // Every 6 months = 1 semester
-  const semester = Math.floor(monthsElapsed / 6) + 1;
-
-  return semester; // cap at 8
+  return Math.floor(monthsElapsed / 6) + 1;
 }
 
-// Login endpoint
 router.post("/login", async (req, res) => {
   try {
-    const { id, password, role } = req.body;
+    const { email, password } = req.body;
 
-    if (!id || !password || !role) {
-      return res
-        .status(400)
-        .json({ error: "ID, password, and role are required" });
+    // 1. Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ id, role });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
+    // 2. Find user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
+    if (!isMatch)
+      return res.status(401).json({ message: "Invalid credentials" });
 
-    // Fetch additional information based on role
-    let additionalInfo = {};
+    const userRole = user.role;
+    const userId = user._id;
 
-    if (role === "student") {
-      const studentInfo = await Student.findById(user.studentRef);
-      if (studentInfo) {
-        // Calculate current semester
+    let enrichedData = {
+      userId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    // 3. Role-specific logic
+    if (userRole === "student") {
+      const student = await Student.findById(user.studentRef);
+      if (student) {
         const calculatedSemester = calculateSemester(
-          studentInfo.joined_year || Number(studentInfo.name.slice(0, 4))
+          student.joined_year || Number(student.name.slice(0, 4))
         );
 
-        // Check if calculated semester differs from stored semester
-        if (calculatedSemester !== studentInfo.current_semester) {
-          // Update the student's semester and reset feedback status
-          await Student.findByIdAndUpdate(user.studentRef, {
+        if (student.current_semester !== calculatedSemester) {
+          await Student.findByIdAndUpdate(student._id, {
             current_semester: calculatedSemester,
             isFeedbackGiven: false,
           });
 
-          // Update the studentInfo object for response
-          studentInfo.current_semester = calculatedSemester;
-          studentInfo.isFeedbackGiven = false;
+          student.current_semester = calculatedSemester;
+          student.isFeedbackGiven = false;
         }
 
-        additionalInfo = {
-          batch: studentInfo.batch,
-          current_semester: studentInfo.current_semester,
-          joined_year: studentInfo.joined_year,
-          isFeedbackGiven: studentInfo.isFeedbackGiven,
+        enrichedData = {
+          ...enrichedData,
+          studentId: student._id,
+          batch: student.batch,
+          current_semester: student.current_semester,
+          joined_year: student.joined_year,
+          isFeedbackGiven: student.isFeedbackGiven,
         };
       }
-    } else if (role === "faculty") {
-      const facultyInfo = await Faculty.findById(user.facultyRef);
-      if (facultyInfo) {
-        additionalInfo = {
-          designation: facultyInfo.designation,
+    } else if (userRole === "faculty" || userRole === "hod") {
+      const faculty = await Faculty.findById(user.facultyRef || user._id);
+      if (faculty) {
+        enrichedData = {
+          ...enrichedData,
+          facultyId: faculty.facultyId,
+          designation: faculty.designation,
+          department: faculty.department,
+          facultyProfile: faculty,
         };
       }
     }
 
-    // Return user info without password, including additional role-specific data
-    const { password: _, ...userInfo } = user.toObject();
-    const responseData = {
-      ...userInfo,
-      ...additionalInfo,
-    };
-
-    // Generate JWT
+    // 4. Generate JWT
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: userId, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      {
+        expiresIn: "1d",
+      }
     );
 
+    // 5. Respond with token + user data
     res.status(200).json({
       message: "Login successful",
-      user: responseData,
+      user: enrichedData,
       token,
     });
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Server error during login" });
   }
 });
 

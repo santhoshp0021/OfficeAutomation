@@ -4,7 +4,7 @@
 
 /* Add hover effects for links */
 a {
-  color: #ecf0f1;
+  /* color: #ecf0f1; */
   text-decoration: none;
   transition: color 0.3s ease;
 }

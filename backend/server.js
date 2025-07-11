@@ -50,7 +50,7 @@ app.get("/", (req, res) => {
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/pgscholars", pgScholarRoutes);
 app.use("/api/publications", publicationRoutes);
-app.use("/api/auth", authRoutes);
+// app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads", {
   setHeaders: (res, path) => {
     if (path.endsWith(".pdf")) {
@@ -87,7 +87,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/faculties", facultyNewRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/assignments", courseFacultyAssignmentRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authNewRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/grievances", grievanceRoutes);
 app.use("/api/notifications", notificationRoutes);

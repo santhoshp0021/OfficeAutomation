@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
@@ -60,16 +60,16 @@ export default function RequestDetails({
         }
       }
 
-      const res = await axios.put(
-        `http://localhost:5000/api/odrequests/${data._id}/docs`,
+      const res = await apiAxios().put(
+        `/odrequests/${data._id}/docs`,
         fd,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "x-user-email": user.email,
           },
         }
       );
+
 
       toast.success("Documents uploaded");
       onSuccess(res.data);
@@ -83,16 +83,10 @@ export default function RequestDetails({
   const updateRequest = async (formData) => {
     setIsLoading(true);
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/odrequests/update-details/${data._id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const res = await apiAxios().put(
+  `/odrequests/update-details/${data._id}`,
+  formData
+);
       toast.success("Update successful");
       onSuccess(res.data);
     } catch {
@@ -105,15 +99,8 @@ export default function RequestDetails({
   const approve = async (status) => {
     setIsLoading(true);
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/odrequests/${data._id}/${status}`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "x-user-email": user.email,
-          },
-        }
+      const res = await apiAxios().put(
+        `/odrequests/${data._id}/${status}`
       );
       toast.success(`${status} successful`);
       onSuccess(res.data);

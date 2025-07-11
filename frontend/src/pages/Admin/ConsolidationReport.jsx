@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 import jsPDF from "jspdf";
@@ -254,20 +254,14 @@ export function ConsolidationReportScholars() {
     async function fetchData() {
       setLoading(true);
       try {
+
         const [schRes, odRes, pubRes, facRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/pgscholars", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/odrequests", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/publications", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/faculty", {
-            headers: { "x-user-email": user.email },
-          }),
+          apiAxios().get("/pgscholars"),
+          apiAxios().get("/odrequests"),
+          apiAxios().get("/publications"),
+          apiAxios().get("/faculty"),
         ]);
+
         setScholars(schRes.data);
         setOdRequests(odRes.data);
         setPublications(pubRes.data);
@@ -1331,9 +1325,7 @@ export function ConsolidationReportOD() {
     async function fetchData() {
       setLoading(true);
       try {
-        const odRes = await axios.get("http://localhost:5000/api/odrequests", {
-          headers: { "x-user-email": user.email },
-        });
+        const odRes = await apiAxios().get("/odrequests");
         setOdRequests(odRes.data);
       } catch (err) {
         // Handle error

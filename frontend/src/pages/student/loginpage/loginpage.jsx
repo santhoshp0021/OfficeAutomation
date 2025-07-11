@@ -8,7 +8,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    id: "",
+    email: "",
     password: "",
     role: "student",
   });
@@ -32,7 +32,7 @@ const LoginPage = () => {
   const getPasswordHint = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/auth/password-hint/${formData.id}/${formData.role}`
+        `http://localhost:5000/api/auth/password-hint/${formData.email}/${formData.role}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -167,15 +167,16 @@ const LoginPage = () => {
           >
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
+            <option value="faculty">hod</option>
             <option value="admin">Admin</option>
           </select>
         </div>
         <input
           className="login-input"
-          type="text"
-          placeholder="Enter your registered number"
-          name="id"
-          value={formData.id}
+          type="email"
+          placeholder="Enter your email-id"
+          name="email"
+          value={formData.email}
           onChange={handleChange}
           required
         />

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { apiAxios } from "../../utils/api";
 
+const api = apiAxios();
 export default function FacultyPart3Potential({
   form,
   setForm,
@@ -20,12 +21,8 @@ export default function FacultyPart3Potential({
       setLoading(true);
       try {
         const [scholarsRes, pubsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/pgscholars", {
-            headers: { "x-user-email": user.email },
-          }),
-          axios.get("http://localhost:5000/api/publications", {
-            headers: { "x-user-email": user.email },
-          }),
+          api.get("/pgscholars"),
+          api.get("/publications"),
         ]);
         const scholarsData = scholarsRes.data.map((s) => ({
           ...s,

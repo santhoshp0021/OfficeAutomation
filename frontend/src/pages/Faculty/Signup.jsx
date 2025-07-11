@@ -28,8 +28,10 @@ export default function Signup({ onSuccess }) {
   const navigate = useNavigate();
 
   const handleNext = (e) => {
+    console.log(form.role)
     e.preventDefault();
     if (form.role === "faculty" || form.role === "hod") {
+      setForm({...form,designation:"Professor"});
       setStep(2);
     } else {
       handleSubmit(e);
@@ -59,7 +61,6 @@ export default function Signup({ onSuccess }) {
       navigate("/login");
     }
   };
-
   return (
     <form
       onSubmit={step === 1 ? handleNext : handleSubmit}
@@ -117,7 +118,7 @@ export default function Signup({ onSuccess }) {
             type="submit"
             className="w-full bg-[#145DA0] text-white py-2 rounded"
           >
-            {form.role === "faculty" ? "Next" : "Sign Up"}
+            {form.role === "faculty" || form.role === "hod" ? "Next" : "Sign Up"}
           </button>
         </>
       )}

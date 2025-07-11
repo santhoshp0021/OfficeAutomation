@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useForm } from "react-hook-form";
 import FormRow from "./FormRow";
 import { toast, Toaster } from "react-hot-toast";
@@ -49,15 +49,8 @@ export default function AddScholar({ formData = {}, onClose, onUpdate }) {
     console.log(user.email);
     try {
       setIsLoading(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/pgscholars",
-        payload,
-        {
-          headers: {
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const res = await apiAxios().post("/pgscholars", payload);
+
       console.log(res.data);
       toast.success("Scholar details added successfully");
       reset();
@@ -82,15 +75,8 @@ export default function AddScholar({ formData = {}, onClose, onUpdate }) {
   async function handleUpdate(payload) {
     try {
       setIsLoading(true);
-      const response = await axios.put(
-        `http://localhost:5000/api/pgscholars/${editId}`,
-        payload,
-        {
-          headers: {
-            "x-user-email": user.email,
-          },
-        }
-      );
+      const response = await apiAxios().put(`/pgscholars/${editId}`, payload);
+
       toast.success("Updated Scholar Details Successfully");
       // reset();
       if (onUpdate) {

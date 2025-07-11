@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const AuthContext = createContext();
 
@@ -15,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
+
     const user = localStorage.getItem("user");
     const token = localStorage.getItem("token");
     if (user && token) {
@@ -28,32 +30,52 @@ export const AuthProvider = ({ children }) => {
       }
     }
     setLoading(false);
+    // console.log(user)
   }, []);
 
-  const login = (userData, token) => {
-    setCurrentUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    console.log(token);
-    localStorage.setItem("token", token);
+  const login = async (credentials) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        credentials
+      );
+      const { user, token } = res.data;
+
+      setCurrentUser(user);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
+
+      toast.success("Login successful");
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
+      return false;
+    }
+  };
+
+  const signup = async (form) => {
+    try {
+      await axios.post("http://localhost:5000/api/auth/register", form);
+      toast.success("Signup successful");
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Signup failed");
+      return false;
+    }
   };
 
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    toast.success("Logged out successfully");
   };
 
-  const isAuthenticated = () => {
-    return currentUser !== null;
-  };
+  const isAuthenticated = () => currentUser !== null;
 
-  const hasRole = (role) => {
-    return currentUser?.role === role;
-  };
+  const hasRole = (role) => currentUser?.role === role;
 
-  const hasAnyRole = (roles) => {
-    return roles.includes(currentUser?.role);
-  };
+  const hasAnyRole = (roles) => roles.includes(currentUser?.role);
 
   const getToken = () => localStorage.getItem("token");
 
@@ -66,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     hasAnyRole,
     getToken,
     loading,
+    signup,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

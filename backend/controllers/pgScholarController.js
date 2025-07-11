@@ -16,12 +16,13 @@ const addPGScholar = async (req, res) => {
 const getAllPGScholars = async (req, res) => {
   try {
     let scholars;
-
     if (req.user.role === "faculty") {
+      console.log(req.user._id)
       scholars = await PGScholar.find({ supervisor: req.user._id }).populate("supervisor", "email");
     } else {
       scholars = await PGScholar.find().populate("supervisor", "email");
     }
+    console.log(scholars);
     res.json(scholars);
     console.log("Sample scholar:", scholars[0]);
   } catch (err) {
@@ -35,7 +36,7 @@ const updatePGScholar = async (req, res) => {
     if (!scholar) return res.status(404).json({ message: "Scholar not found" });
 
     // update only if user is admin or their own supervisor
-    console.log("scholar", scholar.supervisor, req.user._id);
+    // console.log("scholar", scholar.supervisor, req.user._id);
     if (
       req.user.role !== "admin" &&
       (!scholar.supervisor ||

@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast, Toaster } from "react-hot-toast";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function ODRequestForm() {
@@ -75,15 +75,14 @@ export default function ODRequestForm() {
     }
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/odrequests",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-user-email": user.email,
-          },
-        }
+      const res = await apiAxios().post(
+      "/odrequests",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
       );
 
       toast.success("Request submitted successfully");

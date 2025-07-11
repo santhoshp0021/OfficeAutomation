@@ -9,7 +9,6 @@ import {
 import "./App.css";
 
 // Contexts
-import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
 // Notifications
 import { Toaster } from "react-hot-toast";
@@ -83,7 +82,6 @@ function App() {
   const { currentUser: user } = useAuth();
 
   return (
-    <AuthProvider>
       <Router>
         <Toaster
           position="top-right"
@@ -102,263 +100,63 @@ function App() {
         />
 
         <Routes>
-          {/* Public */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/faculty/login" element={<FacultyLogin />} />
-          <Route path="/faculty/signup" element={<Signup />} />
+            {/* Public */}
+            <Route path="/login" element={<FacultyLogin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Student */}
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/getstarted"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <GetStartedPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/feedback"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <FeedbackPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/grievance"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <GrievancePage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Faculty */}
-          <Route
-            element={
-              <ProtectedRoutes>
-                <Outlet />
-              </ProtectedRoutes>
-            }
-          >
-            <Route path="/faculty/dashboard" element={<Dashboard />} />
-            <Route path="/scholars" element={<FacultyScholars />} />
-            <Route path="/scholar/add" element={<AddScholar />} />
-            <Route path="/OD" element={<ODHistory />} />
-            <Route path="/OD/new" element={<ODRequest />} />
-            <Route path="/publications" element={<Publications />} />
-            <Route path="/publication/add" element={<AddPublication />} />
-            <Route path="/CR" element={<GenerateCR />} />
-            <Route path="/CR/view" element={<AllCRReports />} />
+            {/* All protected routes under Home */}
             <Route
-              path="/CR/fullReport/:reportId"
-              element={<FullReport user={user} />}
-            />
-            <Route
-              path="/faculty/performance"
+              path="/"
               element={
-                <ProtectedRoute requiredRole="faculty">
-                  <FacultySelfPerformance />
-                </ProtectedRoute>
+                <ProtectedRoutes>
+                  <Home />
+                </ProtectedRoutes>
               }
-            />
-          </Route>
+            >
+              {/* Faculty */}
+              <Route index element={<Dashboard />} />
+              <Route path="scholars" element={<FacultyScholars />} />
+              <Route path="scholar/add" element={<AddScholar />} />
+              <Route path="OD" element={<ODHistory />} />
+              <Route path="OD/new" element={<ODRequest />} />
+              <Route path="publications" element={<Publications />} />
+              <Route path="publication/add" element={<AddPublication />} />
+              <Route path="CR" element={<GenerateCR />} />
+              <Route path="CR/view" element={<AllCRReports />} />
+              <Route path="CR/fullReport/:reportId" element={<FullReport user={user}/>} />
+              <Route path="faculty/performance" element={<FacultySelfPerformance />} />
 
-          {/* Admin */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <AdminDashboard />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/csvupload"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <CSVUpload />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/assigncourses"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <AssignCourses />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/assign-elective-faculties"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <AssignElectiveFaculties />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/faculties"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <FacultyTable />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/grievances"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <Grievances />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/courses"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <Courses />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/students"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <Students />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/elective-courses"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <AllElectiveCourses />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/elective-student-assignments"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminLayout
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                >
-                  <ElectiveCoursesStudentAssignment />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report/menu"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportMenu />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report/scholars"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportScholars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report/OD"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportOD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report/faculty"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportFaculty />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report/faculty/:facultyName"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportFacultyAnalytics />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/consolidation-report"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ConsolidationReportMenu />
-              </ProtectedRoute>
-            }
-          />
+              {/* Admin */}
+              <Route path="admin/dashboard" element={<AdminDashboard />} />
+              <Route path="admin/csvupload" element={<CSVUpload />} />
+              <Route path="admin/assigncourses" element={<AssignCourses />} />
+              <Route path="admin/assign-elective-faculties" element={<AssignElectiveFaculties />} />
+              <Route path="admin/faculties" element={<FacultyTable />} />
+              <Route path="admin/grievances" element={<Grievances />} />
+              <Route path="admin/courses" element={<Courses />} />
+              <Route path="admin/students" element={<Students />} />
+              <Route path="admin/elective-courses" element={<AllElectiveCourses />} />
+              <Route path="admin/elective-student-assignments" element={<ElectiveCoursesStudentAssignment />} />
+              <Route path="admin/consolidation-report" element={<ConsolidationReportMenu />} />
+              <Route path="admin/consolidation-report/menu" element={<ConsolidationReportMenu />} />
+              <Route path="admin/consolidation-report/scholars" element={<ConsolidationReportScholars />} />
+              <Route path="admin/consolidation-report/OD" element={<ConsolidationReportOD />} />
+              <Route path="admin/consolidation-report/faculty" element={<ConsolidationReportFaculty />} />
+              <Route path="admin/consolidation-report/faculty/:facultyName" element={<ConsolidationReportFacultyAnalytics />} />
 
-          {/* Fallback */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+              {/* Student */}
+              <Route path="home" element={<HomePage />} />
+              <Route path="getstarted" element={<GetStartedPage />} />
+              <Route path="feedback" element={<FeedbackPage />} />
+              <Route path="grievance" element={<GrievancePage />} />
+            </Route>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+
       </Router>
-    </AuthProvider>
   );
 }
 

@@ -12,7 +12,6 @@ import {
   FaChalkboardTeacher,
   FaStar,
   FaArrowUp,
-  FaTrendingDown,
   FaClock,
   FaCheckCircle,
   FaTimesCircle,

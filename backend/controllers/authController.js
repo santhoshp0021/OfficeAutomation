@@ -20,11 +20,12 @@ const register = async (req, res) => {
       presentPay,
       natureOfAppointment,
     } = req.body;
+    console.log(req.body)
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ message: "Email already exists" });
-
-    const user = new User({ name, email, password, role });
+    let id=email;
+    const user = new User({ id,name, email, password, role });
     await user.save();
 
     // Automatically create Faculty profile if role is faculty or hod

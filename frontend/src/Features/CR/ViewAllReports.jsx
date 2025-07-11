@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { apiAxios } from "../../utils/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 import { toast } from "react-hot-toast";
@@ -34,21 +34,19 @@ export default function AllCRReports() {
     }
 
     setLoading(true);
-    axios
-      .get(`http://localhost:5000/api/crreport?${params.toString()}`, {
-        headers: { "x-user-email": user.email },
-      })
-      .then((res) => {
-        setReports(res.data.reports);
-        setTotal(res.data.total || 0);
-      })
-      .catch(() => {
-        toast.error("Failed to load CR Reports");
-        setReports([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    apiAxios()
+  .get(`/crreport?${params.toString()}`)
+  .then((res) => {
+    setReports(res.data.reports);
+    setTotal(res.data.total || 0);
+  })
+  .catch(() => {
+    toast.error("Failed to load CR Reports");
+    setReports([]);
+  })
+  .finally(() => {
+    setLoading(false);
+  });
   };
 
   useEffect(() => {
@@ -62,14 +60,9 @@ export default function AllCRReports() {
     }
 
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/crreport/${
-          user.facultyId || user.userId || user._id
-        }?year=${selectedYear}&period=${selectedPeriod}`,
-        {
-          headers: { "x-user-email": user.email },
-        }
-      );
+      const res = await apiAxios().get(
+  `/crreport/${user.facultyId || user.userId || user._id}?year=${selectedYear}&period=${selectedPeriod}`
+);
       // console.log(res);
       if (res.data.created) {
         toast.success(res.data.message);
@@ -84,12 +77,8 @@ export default function AllCRReports() {
 
   const handleDelete = async (reportId) => {
     try {
-      const res = await axios.delete(
-        `http://localhost:5000/api/crreport/${reportId}`,
-        {
-          headers: { "x-user-email": user.email },
-        }
-      );
+      const res = await apiAxios().delete(`/crreport/${reportId}`);
+
       // console.log(res);
       if (res.data.deleted) {
         toast.success(res.data.message);
@@ -104,13 +93,10 @@ export default function AllCRReports() {
   const handleActionClick = async (report) => {
     if (report.status === "finalized") {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/crreport/${report._id}/download`,
-          {
-            headers: { "x-user-email": user.email },
-            responseType: "blob",
-          }
-        );
+        const res = await apiAxios().get(`/crreport/${report._id}/download`, {
+  responseType: "blob",
+});
+
         const url = window.URL.createObjectURL(new Blob([res.data]));
         const link = document.createElement("a");
         link.href = url;
