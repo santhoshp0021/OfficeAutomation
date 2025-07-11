@@ -8,7 +8,7 @@ const testYearCalculation = () => {
   console.log(`Current Year: ${currentYear}`);
   console.log(`Current Month: ${currentMonth}`);
   
-  // Test different year of joining scenarios
+  // Testṭ different year of joining scenarios
   const testCases = [
     { yearOfJoin: 2023, expected: currentMonth >= 7 ? "3rd" : "2nd" },
     { yearOfJoin: 2022, expected: currentMonth >= 7 ? "4th" : "3rd" },
