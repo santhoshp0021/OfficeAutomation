@@ -74,4 +74,4 @@ const FacultySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Faculty', FacultySchema);
+module.exports = mongoose.models.Faculty || mongoose.model("Faculty", FacultySchema);
