@@ -10,7 +10,7 @@ const {
   getUserRequestsByEmail,
   updateODDetails,
   generateODLetter
-} = require("../controllers/ODController");
+} = require("../controllers/FacultyODController");
 const {
   verifyToken,
   requireRole,

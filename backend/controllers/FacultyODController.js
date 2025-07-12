@@ -1,4 +1,4 @@
-const ODRequest = require("../models/ODrequest");
+const ODRequest = require("../models/FacultyODrequest");
 const path = require("path");
 const fs = require("fs");
 const puppeteer = require("puppeteer");

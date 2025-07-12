@@ -9,7 +9,7 @@ const facultyRoutes = require("./routes/facultyRoutes");
 const pgScholarRoutes = require("./routes/pgScholarRoutes");
 const publicationRoutes = require("./routes/publicationRoutes");
 const authRoutes = require("./routes/authRoutes");
-const odRoutes = require("./routes/ODRoutes");
+const odRoutes = require("./routes/FacultyODRoutes");
 const crReportRoutes = require("./routes/crRoutes");
 
 const studentRoutes = require("./routes/student");
