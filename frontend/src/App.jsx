@@ -4,49 +4,55 @@ import {
   Routes,
   Route,
   Navigate,
-  Outlet,
 } from "react-router-dom";
 import "./App.css";
 
-// Contexts
+// Context
 import { useAuth } from "./contexts/AuthContext";
+
 // Notifications
 import { Toaster } from "react-hot-toast";
 
-// Protected Routes
-import ProtectedRoute from "./components/ProtectedRoute";
-import ProtectedRoutes from "./ui/ProtectedRoutes";
-
-// Admin Layout
+// Layout
 import Sidebar from "./components/sidebar/sidebar";
 import NavBar from "./components/navbar/navbar";
-const AdminLayout = ({ sidebarOpen, setSidebarOpen, children }) => (
-  <div className="app-container">
-    <Sidebar open={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-    <div className="right-content">
-      <NavBar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />
-      {children}
-    </div>
-  </div>
-);
+
+// Protected routing
+import ProtectedRoutes from "./ui/ProtectedRoutes";
+
+// Theme and Date Picker
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./theme";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 // Common Pages
-import Home from "./pages/Home";
 import Unauthorized from "./pages/Unauthorized";
 import FacultyLogin from "./pages/Faculty/Login";
 import Signup from "./pages/Faculty/Signup";
-import Dashboard from "./pages/Faculty/Dashboard";
+import Home from "./pages/Home";
 
-// Faculty Features
-import ODRequest from "./Features/OD/ODRequest";
-import ODHistory from "./Features/OD/ODHistory";
-import AddPublication from "./Features/Publications/AddPublication";
-import Publications from "./Features/Publications/Publications";
-import AddScholar from "./Features/Scholars/AddScholar";
+// Student Pages
+import HomePage from "./pages/student/homepage/homepage";
+import GetStartedPage from "./pages/student/getstartedpage/getstartedpage";
+import FeedbackPage from "./pages/student/feedbackpage/feedbackpage";
+import GrievancePage from "./pages/student/grievancepage/grievancepage";
+import ODRequestForm from "./components/ODRequestForm";
+import ODRequestList from "./components/ODRequestList";
+
+// Faculty Pages
+import Dashboard from "./pages/Faculty/Dashboard";
+import FacultyODRequestList from "./components/FacultyODRequestList";
 import FacultyScholars from "./Features/Scholars/Scholars";
+import AddScholar from "./Features/Scholars/AddScholar";
+import ODHistory from "./Features/OD/ODHistory";
+import ODRequest from "./Features/OD/ODRequest";
+import Publications from "./Features/Publications/Publications";
+import AddPublication from "./Features/Publications/AddPublication";
 import GenerateCR from "./Features/CR/GenerateCR";
 import AllCRReports from "./Features/CR/ViewAllReports";
 import FullReport from "./Features/CR/FullReport";
+import FacultySelfPerformance from "./pages/faculty/FacultySelfPerformance";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/dashboard/dashboard";
@@ -67,96 +73,361 @@ import {
 import ConsolidationReportFaculty from "./pages/Admin/ConsolidationReportFaculty";
 import ConsolidationReportFacultyAnalytics from "./pages/Admin/ConsolidationReportFacultyAnalytics";
 
-// Student Pages
-import HomePage from "./pages/student/homepage/homepage";
-import GetStartedPage from "./pages/student/getstartedpage/getstartedpage";
-import LoginPage from "./pages/student/loginpage/loginpage";
-import FeedbackPage from "./pages/student/feedbackpage/feedbackpage";
-import GrievancePage from "./pages/student/grievancepage/grievancepage";
+// HOD Page
+import HODDashboard from "./components/HODDashboard";
 
-// Faculty Self Performance
-import FacultySelfPerformance from "./pages/faculty/FacultySelfPerformance";
+// Landing and Register from original app
+import LandingPage from "./components/LandingPage";
+import Register from "./components/Register";
+import AdminManagement from "./components/AdminManagement";
+
+const AdminLayout = ({ sidebarOpen, setSidebarOpen, children }) => (
+  <div className="app-container">
+    <Sidebar open={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+    <div className="right-content">
+      <NavBar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />
+      {children}
+    </div>
+  </div>
+);
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { currentUser: user } = useAuth();
 
   return (
-      <Router>
-        <Toaster
-          position="top-right"
-          containerStyle={{ margin: "10px" }}
-          toastOptions={{
-            success: { duration: 3000 },
-            error: { duration: 5000 },
-            style: {
-              fontSize: "16px",
-              maxWidth: "500px",
-              padding: "16px 24px",
-              backgroundColor: "#ffffff",
-              color: "var(--color-grey-700)",
-            },
-          }}
-        />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <Router>
+          <Toaster
+            position="top-right"
+            containerStyle={{ margin: "10px" }}
+            toastOptions={{
+              success: { duration: 3000 },
+              error: { duration: 5000 },
+              style: {
+                fontSize: "16px",
+                maxWidth: "500px",
+                padding: "16px 24px",
+                backgroundColor: "#ffffff",
+                color: "var(--color-grey-700)",
+              },
+            }}
+          />
 
-        <Routes>
-            {/* Public */}
-            <Route path="/login" element={<FacultyLogin />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
 
-            {/* All protected routes under Home */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoutes>
-                  <Home />
-                </ProtectedRoutes>
-              }
-            >
-              {/* Faculty */}
-              <Route index element={<Dashboard />} />
-              <Route path="scholars" element={<FacultyScholars />} />
-              <Route path="scholar/add" element={<AddScholar />} />
-              <Route path="OD" element={<ODHistory />} />
-              <Route path="OD/new" element={<ODRequest />} />
-              <Route path="publications" element={<Publications />} />
-              <Route path="publication/add" element={<AddPublication />} />
-              <Route path="CR" element={<GenerateCR />} />
-              <Route path="CR/view" element={<AllCRReports />} />
-              <Route path="CR/fullReport/:reportId" element={<FullReport user={user}/>} />
-              <Route path="faculty/performance" element={<FacultySelfPerformance />} />
-
-              {/* Admin */}
-              <Route path="admin/dashboard" element={<AdminDashboard />} />
-              <Route path="admin/csvupload" element={<CSVUpload />} />
-              <Route path="admin/assigncourses" element={<AssignCourses />} />
-              <Route path="admin/assign-elective-faculties" element={<AssignElectiveFaculties />} />
-              <Route path="admin/faculties" element={<FacultyTable />} />
-              <Route path="admin/grievances" element={<Grievances />} />
-              <Route path="admin/courses" element={<Courses />} />
-              <Route path="admin/students" element={<Students />} />
-              <Route path="admin/elective-courses" element={<AllElectiveCourses />} />
-              <Route path="admin/elective-student-assignments" element={<ElectiveCoursesStudentAssignment />} />
-              <Route path="admin/consolidation-report" element={<ConsolidationReportMenu />} />
-              <Route path="admin/consolidation-report/menu" element={<ConsolidationReportMenu />} />
-              <Route path="admin/consolidation-report/scholars" element={<ConsolidationReportScholars />} />
-              <Route path="admin/consolidation-report/OD" element={<ConsolidationReportOD />} />
-              <Route path="admin/consolidation-report/faculty" element={<ConsolidationReportFaculty />} />
-              <Route path="admin/consolidation-report/faculty/:facultyName" element={<ConsolidationReportFacultyAnalytics />} />
+            {/* Home layout always visible, only nested routes protected */}
+            <Route path="/" element={<Home />}>
+              <Route path="/login" element={<FacultyLogin />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route
+                index
+                element={
+                  <ProtectedRoutes>
+                    <Dashboard />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="scholars"
+                element={
+                  <ProtectedRoutes>
+                    <FacultyScholars />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="scholar/add"
+                element={
+                  <ProtectedRoutes>
+                    <AddScholar />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="OD"
+                element={
+                  <ProtectedRoutes>
+                    <ODHistory />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="OD/new"
+                element={
+                  <ProtectedRoutes>
+                    <ODRequest />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="faculty/od-requests"
+                element={
+                  <ProtectedRoutes>
+                    <FacultyODRequestList />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="publications"
+                element={
+                  <ProtectedRoutes>
+                    <Publications />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="publication/add"
+                element={
+                  <ProtectedRoutes>
+                    <AddPublication />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="CR"
+                element={
+                  <ProtectedRoutes>
+                    <GenerateCR />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="CR/view"
+                element={
+                  <ProtectedRoutes>
+                    <AllCRReports />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="CR/fullReport/:reportId"
+                element={
+                  <ProtectedRoutes>
+                    <FullReport user={user} />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="faculty/performance"
+                element={
+                  <ProtectedRoutes>
+                    <FacultySelfPerformance />
+                  </ProtectedRoutes>
+                }
+              />
 
               {/* Student */}
-              <Route path="home" element={<HomePage />} />
-              <Route path="getstarted" element={<GetStartedPage />} />
-              <Route path="feedback" element={<FeedbackPage />} />
-              <Route path="grievance" element={<GrievancePage />} />
+              <Route
+                path="home"
+                element={
+                  <ProtectedRoutes>
+                    <HomePage />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="getstarted"
+                element={
+                  <ProtectedRoutes>
+                    <GetStartedPage />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="feedback"
+                element={
+                  <ProtectedRoutes>
+                    <FeedbackPage />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="grievance"
+                element={
+                  <ProtectedRoutes>
+                    <GrievancePage />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="student/od-request"
+                element={
+                  <ProtectedRoutes>
+                    <ODRequestForm />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="student/my-requests"
+                element={
+                  <ProtectedRoutes>
+                    <ODRequestList />
+                  </ProtectedRoutes>
+                }
+              />
+
+              {/* HOD */}
+              <Route
+                path="hod/dashboard"
+                element={
+                  <ProtectedRoutes>
+                    <HODDashboard />
+                  </ProtectedRoutes>
+                }
+              />
+
+              {/* Admin */}
+              <Route
+                path="admin/dashboard"
+                element={
+                  <ProtectedRoutes>
+                    <AdminDashboard />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/management"
+                element={
+                  <ProtectedRoutes>
+                    <AdminManagement />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/csvupload"
+                element={
+                  <ProtectedRoutes>
+                    <CSVUpload />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/assigncourses"
+                element={
+                  <ProtectedRoutes>
+                    <AssignCourses />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/assign-elective-faculties"
+                element={
+                  <ProtectedRoutes>
+                    <AssignElectiveFaculties />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/faculties"
+                element={
+                  <ProtectedRoutes>
+                    <FacultyTable />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/grievances"
+                element={
+                  <ProtectedRoutes>
+                    <Grievances />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/courses"
+                element={
+                  <ProtectedRoutes>
+                    <Courses />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/students"
+                element={
+                  <ProtectedRoutes>
+                    <Students />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/elective-courses"
+                element={
+                  <ProtectedRoutes>
+                    <AllElectiveCourses />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/elective-student-assignments"
+                element={
+                  <ProtectedRoutes>
+                    <ElectiveCoursesStudentAssignment />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportMenu />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report/menu"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportMenu />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report/scholars"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportScholars />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report/OD"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportOD />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report/faculty"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportFaculty />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="admin/consolidation-report/faculty/:facultyName"
+                element={
+                  <ProtectedRoutes>
+                    <ConsolidationReportFacultyAnalytics />
+                  </ProtectedRoutes>
+                }
+              />
             </Route>
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-
-      </Router>
+        </Router>
+      </LocalizationProvider>
+    </ThemeProvider>
   );
 }
 

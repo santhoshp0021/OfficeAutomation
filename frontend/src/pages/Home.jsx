@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Sidebar from "../ui/Sidbear";
+import Sidebar from "../ui/Sidebar";
 import { Outlet } from "react-router-dom";
 
 export default function Home() {

@@ -1,5 +1,5 @@
 import React from "react";
-import Sidebar from "../../ui/Sidbear";
+import Sidebar from "../../ui/Sidebar";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function Dashboard() {

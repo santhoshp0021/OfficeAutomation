@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ODRequestSchema = new mongoose.Schema({
+const FacultyODRequestSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
@@ -101,4 +101,8 @@ const ODRequestSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("ODRequest", ODRequestSchema);
+if (process.env.NODE_ENV === "development" && mongoose.models.FacultyODRequest) {
+  delete mongoose.models.FacultyODRequest;
+}
+
+module.exports = mongoose.model("FacultyODRequest", FacultyODRequestSchema);
