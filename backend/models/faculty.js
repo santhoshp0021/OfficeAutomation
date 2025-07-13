@@ -74,4 +74,8 @@ const FacultySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-module.exports = mongoose.models.Faculty || mongoose.model("Faculty", FacultySchema);
+if (process.env.NODE_ENV === "development" && mongoose.models.Faculty) {
+  delete mongoose.models.Faculty;
+}
+
+module.exports = mongoose.model("Faculty", FacultySchema);
