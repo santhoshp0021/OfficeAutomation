@@ -1,122 +1,139 @@
-const User =  require('./models/User');
-const Weektable =  require('./models/Weektable');
-const Timetable =  require('./models/Timetable');
-const Period =  require('./models/Period');
-// Helper to get next 4 Monday dates
-function getNext4WeekStarts() {
-    const weeks = [];
-    const today = new Date();
-    const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-    monday.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 4; i++) {
-      const weekStart = new Date(monday);
-      weekStart.setDate(monday.getDate() + i * 7);
-      weeks.push(new Date(weekStart.setUTCHours(18, 30, 0, 0)));
-    }
-    return weeks;
+const User = require('./models/User');
+const Weektable = require('./models/Weektable');
+const Timetable = require('./models/Timetable');
+const Period = require('./models/Period');
+const HolidayDay = require('./models/HolidayDay');
+
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-//Helper to get this week's monday
-function getCurrentWeekStart() {
-    const d = new Date();
-    const weekStart = new Date(d.setDate(d.getDate() - d.getDay() ));
-    weekStart.setUTCHours(18, 30, 0, 0);
-    return weekStart;
+// Returns the HolidayDay doc if the date is a holiday, null otherwise
+async function checkHoliday(dateStr) {
+  return HolidayDay.findOne({ date: dateStr });
 }
 
-//Helper to get given week's monday
-function getWeekStart(date) {
-    const d = new Date(date);
-    const weekStart = new Date(d.setDate(d.getDate() - d.getDay() ));
-    weekStart.setUTCHours(18, 30, 0, 0);
-    return weekStart;
-}
-
-// Helper to get next week's Monday
-function getNextWeekStart() {
-  const now = new Date();
-  const day = now.getDay();
-  // 0=Sunday, 1=Monday, ..., 6=Saturday
-  const daysUntilNextMonday = ((8 - day) % 7) || 7;
-  const nextMonday = new Date(now);
-  nextMonday.setDate(now.getDate() + daysUntilNextMonday);
-  nextMonday.setHours(0, 0, 0, 0);
-  return nextMonday;
-}
-
-// Helper to get Monday of a week, offset by n weeks from now
-function getWeekStartWithOffset(offset = 0) {
-  const now = new Date();
-  const monday = new Date(now.setDate(now.getDate() - now.getDay() + 1 + offset * 7));
+// Get Monday of the week containing dateInput (local time)
+function getWeekStart(dateInput) {
+  const d = new Date(dateInput || Date.now());
+  const day = d.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
   return monday;
 }
 
-async function ensureWeektablesForAllUsers() {
-    const users = await User.find({});
-    for (let weekOffset = 0; weekOffset < 5; weekOffset++) {
-      const weekStart = getWeekStartWithOffset(weekOffset);
-  
-      for (const user of users) {
-        let weektable = await Weektable.findOne({ userId: user.userId, weekStart });
-  
-        // Try to get user's timetable
-        const timetable = await Timetable.findOne({ userId: user.userId });
-  
-        let periods = [];
-  
-        if (timetable && Array.isArray(timetable.periods) && timetable.periods.length > 0) {
-          const periodDocs = await Period.find({ _id: { $in: timetable.periods } });
-  
-          periods = periodDocs.map(period => ({
-            periodNo: period.periodNo,
-            day: period.day,
-            periodId: period.periodId,
-            free: period.free,
-            roomNo: period.roomNo || '',
-            courseCode: period.courseCode || '',
-            staffName: period.staffName || '',
-            lab: period.lab || '',
-            projector: "",
-            startTime: period.startTime || '',
-            endTime: period.endTime || ''
-          }));
-        } else {
-          // 👇 Fallback: generate default 40-period week
-          const startTimes = ["08:30", "09:25", "10:30", "11:25", "13:10", "14:05", "15:00", "15:55"];
-          const endTimes   = ["09:20", "10:15", "11:20", "12:15", "14:00", "14:55", "15:50", "16:45"];
-  
-          for (let day = 1; day <= 5; day++) {
-            for (let periodNo = 1; periodNo < 9; periodNo++) {
-              periods.push({
-                periodNo,
-                day,
-                periodId: `${periodNo}-${day}`,
-                free: true,
-                roomNo: '',
-                courseCode: '',
-                staffName: '',
-                lab: '',
-                projector: '',
-                startTime: startTimes[periodNo-1],
-                endTime: endTimes[periodNo-1]
-              });
-            }
-          }
-        }
-  
-        if (!weektable) {
-          await Weektable.create({
-            userId: user.userId,
-            periods,
-            weekStart
-          });
-        } else {
-          weektable.periods = periods;
-          await weektable.save();
-        }
-      }
-    }
+function getCurrentWeekStart() {
+  return getWeekStart(new Date());
 }
 
-module.exports = { getWeekStart,getNextWeekStart, getNext4WeekStarts, getCurrentWeekStart, getWeekStartWithOffset, ensureWeektablesForAllUsers };
+// Get Monday offset by `offset` weeks from current week
+function getWeekStartWithOffset(offset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset * 7);
+  return getWeekStart(d);
+}
+
+function getNextWeekStart() {
+  return getWeekStartWithOffset(1);
+}
+
+const PERIOD_TIMES = [
+  { startTime: '08:30', endTime: '09:20' },
+  { startTime: '09:25', endTime: '10:15' },
+  { startTime: '10:30', endTime: '11:20' },
+  { startTime: '11:25', endTime: '12:15' },
+  { startTime: '13:10', endTime: '14:00' },
+  { startTime: '14:05', endTime: '14:55' },
+  { startTime: '15:00', endTime: '15:50' },
+  { startTime: '15:55', endTime: '16:45' },
+];
+
+async function generatePeriodsForUser(userId) {
+  const timetable = await Timetable.findOne({ userId });
+  let periods = [];
+
+  if (timetable && timetable.periods.length > 0) {
+    const periodDocs = await Period.find({ _id: { $in: timetable.periods } });
+    periods = periodDocs.map(p => ({
+      periodNo: p.periodNo,
+      day: p.day,
+      periodId: p.periodId,
+      free: p.free !== false,
+      roomNo: p.roomNo || '',
+      courseCode: p.courseCode || '',
+      staffName: p.staffName || '',
+      lab: p.lab || '',
+      projector: '',
+      startTime: p.startTime || PERIOD_TIMES[p.periodNo - 1]?.startTime || '',
+      endTime: p.endTime || PERIOD_TIMES[p.periodNo - 1]?.endTime || '',
+    }));
+  } else {
+    for (let day = 1; day <= 5; day++) {
+      for (let periodNo = 1; periodNo <= 8; periodNo++) {
+        periods.push({
+          periodNo,
+          day,
+          periodId: `${periodNo}-${day}`,
+          free: true,
+          roomNo: '',
+          courseCode: '',
+          staffName: '',
+          lab: '',
+          projector: '',
+          startTime: PERIOD_TIMES[periodNo - 1].startTime,
+          endTime: PERIOD_TIMES[periodNo - 1].endTime,
+        });
+      }
+    }
+  }
+  return periods;
+}
+
+// Called on server startup — only creates missing weektables, never overwrites existing bookings
+async function ensureWeektablesForAllUsers() {
+  const users = await User.find({});
+  for (let weekOffset = 0; weekOffset < 5; weekOffset++) {
+    const weekStart = getWeekStartWithOffset(weekOffset);
+    for (const user of users) {
+      const existing = await Weektable.findOne({ userId: user.userId, weekStart });
+      if (!existing) {
+        const periods = await generatePeriodsForUser(user.userId);
+        await Weektable.create({ userId: user.userId, periods, weekStart });
+      }
+    }
+  }
+}
+
+// Called after a timetable upload — updates future free slots while preserving bookings
+async function regenerateWeektablesForUser(userId) {
+  const newPeriods = await generatePeriodsForUser(userId);
+  for (let weekOffset = 0; weekOffset < 5; weekOffset++) {
+    const weekStart = getWeekStartWithOffset(weekOffset);
+    const existing = await Weektable.findOne({ userId, weekStart });
+    if (!existing) {
+      await Weektable.create({ userId, periods: newPeriods, weekStart });
+    } else {
+      // Merge: preserve booked periods, update free ones with new timetable
+      existing.periods = newPeriods.map((newP, idx) => {
+        const old = existing.periods[idx];
+        if (old && !old.free) return old; // keep booking
+        return newP;
+      });
+      await existing.save();
+    }
+  }
+}
+
+module.exports = {
+  getWeekStart,
+  getCurrentWeekStart,
+  getWeekStartWithOffset,
+  getNextWeekStart,
+  ensureWeektablesForAllUsers,
+  regenerateWeektablesForUser,
+  PERIOD_TIMES,
+  localDateStr,
+  checkHoliday,
+};

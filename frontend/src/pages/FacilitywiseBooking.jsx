@@ -1,25 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Sidebar from '../components/Sidebar';
-import Banner from '../components/Banner';
+import { useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import Sidebar from '../components/Sidebar';
+import Banner from '../components/Banner';
+import api from '../utils/api';
 
-const storedUser = localStorage.getItem("user");
-const user = storedUser ? JSON.parse(storedUser) : null;
-
-const typeColors = {
-  room: '#e8f0fe',
-  lab: '#f3e5f5',
-  projector: '#fff7e6'
-};
-const borderColors = {
-  room: '#4285f4',
-  lab: '#8e24aa',
-  projector: '#fbbc04'
-};
-
-const periods = [
+const PERIOD_TIMES = [
   { start: '08:30', end: '09:20' },
   { start: '09:25', end: '10:15' },
   { start: '10:30', end: '11:20' },
@@ -27,214 +13,166 @@ const periods = [
   { start: '13:10', end: '14:00' },
   { start: '14:05', end: '14:55' },
   { start: '15:00', end: '15:50' },
-  { start: '15:55', end: '16:45' }
+  { start: '15:55', end: '16:45' },
 ];
 
-// ✅ Format date in local timezone (yyyy-mm-dd)
-function formatDateLocal(dateObj) {
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+const TYPE_LABELS = { room: 'Room', lab: 'Lab', projector: 'Projector' };
+
+function formatDateLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// ✅ Convert yyyy-mm-dd string to Date object
-const parseDate = (dateStr) => {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
-// ✅ Check if selected date & slot time is in future
-function isFutureOrToday(dateStr, slotStartTime) {
-  const dateTime = new Date(`${dateStr}T${slotStartTime}:00`);
-  const now = new Date();
-  return dateTime >= now;
+function isFutureOrToday(dateStr, slotStart) {
+  return new Date(`${dateStr}T${slotStart}:00`) >= new Date();
 }
 
-const FacilityWiseBooking = () => {
+function withinWeekFromToday(dateStr) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T00:00:00');
+  const diff = (target - today) / 86400000;
+  return diff >= 0 && diff <= 6;
+}
+
+export default function FacilityWiseBooking() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isStudentRep = user?.role === 'student_rep';
+
   const [dateList, setDateList] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [facilityUsage, setFacilityUsage] = useState({});
   const [facilities, setFacilities] = useState([]);
-  const [filteredFacilities, setFilteredFacilities] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('');
 
   useEffect(() => {
-    const fetchDates = async () => {
-      try {
-        const res = await axios.get('/api/admin/available-week-dates');
-        setDateList(res.data);
-        const todayStr = formatDateLocal(new Date());
-        const todayAvailable = res.data.includes(todayStr);
-        const initialDate = todayAvailable ? todayStr : res.data[0];
-        setSelectedDate(parseDate(initialDate));
-      } catch {
-        setDateList([]);
-      }
-    };
-    fetchDates();
+    api.get('/admin/available-week-dates').then(res => {
+      const all = res.data;
+      const filtered = isStudentRep ? all.filter(withinWeekFromToday) : all;
+      setDateList(filtered);
+      const todayStr = formatDateLocal(new Date());
+      const init = filtered.includes(todayStr) ? todayStr : filtered[0];
+      if (init) setSelectedDate(new Date(init + 'T00:00:00'));
+    }).catch(() => setDateList([]));
   }, []);
 
   useEffect(() => {
-    const fetchFacilities = async () => {
-      try {
-        const res = await axios.get('/api/allFacilities');
-        const allowed = ['room', 'lab', 'projector'];
-        const validFacilities = res.data.filter(f => allowed.includes(f.type));
-        setFacilities(validFacilities);
-        setFilteredFacilities(validFacilities);
-      } catch {
-        setFacilities([]);
-      }
-    };
-    fetchFacilities();
+    api.get('/allFacilities').then(res => {
+      const allowed = res.data.filter(f => ['room','lab','projector'].includes(f.type));
+      setFacilities(allowed);
+      setFiltered(allowed);
+    }).catch(() => setFacilities([]));
   }, []);
 
   useEffect(() => {
-    const fetchUsage = async () => {
-      if (!selectedDate) return;
-      setLoading(true);
-      try {
-        const formattedDate = formatDateLocal(selectedDate);
-        const res = await axios.get('/api/admin/usage-status', {
-          params: { date: formattedDate }
-        });
-        setFacilityUsage(res.data);
-      } catch {
-        setFacilityUsage({});
-      }
-      setLoading(false);
-    };
-    fetchUsage();
+    if (!selectedDate) return;
+    setLoading(true);
+    api.get('/admin/usage-status', { params: { date: formatDateLocal(selectedDate) } })
+      .then(res => setFacilityUsage(res.data))
+      .catch(() => setFacilityUsage({}))
+      .finally(() => setLoading(false));
   }, [selectedDate]);
-
-  const handleBook = async (facilityName, type, idx) => {
-    const formattedDate = formatDateLocal(selectedDate);
-    const payload = {
-      date: formattedDate,
-      slot: idx,
-      facility: facilityName,
-      type,
-      userId: user.userId,
-    };
-
-    try {
-      const response = await fetch("/api/faculty/facilities/book", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || "Booking failed");
-      }
-      await response.json();
-      alert(`${facilityName} successfully booked for ${formattedDate} - Period ${idx + 1}`);
-      window.location.reload();
-    } catch (err) {
-      console.error("Booking error:", err);
-      alert("Booking failed. Try again.");
-    }
-  };
 
   const handleTypeChange = (value) => {
     setSelectedType(value);
-    let filtered = [];
-
-    if (value === "kp") {
-      filtered = facilities.filter(f => f.type === 'room' && f.name.startsWith('KP'));
-    } else if (value === "dept") {
-      filtered = facilities.filter(f => f.type === 'room' && !f.name.startsWith('KP'));
-    } else if (value === "lab") {
-      filtered = facilities.filter(f => f.type === 'lab');
-    } else if (value === "projector") {
-      filtered = facilities.filter(f => f.type === 'projector');
-    } else {
-      filtered = facilities;
-    }
-
-    setFilteredFacilities(filtered);
+    if (value === 'kp') setFiltered(facilities.filter(f => f.type === 'room' && f.name.startsWith('KP')));
+    else if (value === 'dept') setFiltered(facilities.filter(f => f.type === 'room' && !f.name.startsWith('KP')));
+    else if (value === 'lab') setFiltered(facilities.filter(f => f.type === 'lab'));
+    else if (value === 'projector') setFiltered(facilities.filter(f => f.type === 'projector'));
+    else setFiltered(facilities);
   };
 
-  const formattedSelectedDate = selectedDate ? formatDateLocal(selectedDate) : '';
+  const handleBook = async (facilityName, type, idx) => {
+    const dateStr = formatDateLocal(selectedDate);
+    try {
+      await api.post('/faculty/facilities/book', {
+        date: dateStr, slot: idx, facility: facilityName, type, userId: user.userId
+      });
+      alert(`${facilityName} booked for ${dateStr} - Period ${idx + 1}`);
+      const res = await api.get('/admin/usage-status', { params: { date: dateStr } });
+      setFacilityUsage(res.data);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Booking failed');
+    }
+  };
+
+  const dateStr = selectedDate ? formatDateLocal(selectedDate) : '';
+
+  const typeColorClass = { room: 'bg-blue-50 border-blue-300', lab: 'bg-purple-50 border-purple-300', projector: 'bg-yellow-50 border-yellow-300' };
+  const typeTextClass = { room: 'text-blue-700', lab: 'text-purple-700', projector: 'text-yellow-700' };
 
   return (
-    <div style={{ padding: 32, minHeight: '100vh', background: '#f5f5dc', width: '100vw' }}>
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
       <Banner />
       <Sidebar />
-      <h2 style={{ paddingTop: 96, marginBottom: 20, color: '#1a237e', textAlign: 'center' }}>
-        Facility-wise Booking
-      </h2>
+      <div className="pt-24 px-4 pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-4 mb-6 text-center">Facility-wise Booking</h2>
 
-      <div style={{ display: 'flex', alignItems: 'start', gap: 40, marginBottom: 30, paddingLeft: 16 }}>
-        <div>
-          <label style={{ fontWeight: 'bold' }}>Select Date:</label><br />
-          <ReactDatePicker
-            selected={selectedDate}
-            onChange={date => setSelectedDate(date)}
-            includeDates={dateList.map(parseDate)}
-            inline
-            calendarStartDay={1}
-          />
+        <div className="flex flex-wrap gap-8 mb-6 items-start px-2">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Select Date</label>
+            <ReactDatePicker
+              selected={selectedDate}
+              onChange={d => setSelectedDate(d)}
+              includeDates={dateList.map(d => new Date(d + 'T00:00:00'))}
+              inline
+              calendarStartDay={1}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Facility Type</label>
+            <select
+              value={selectedType}
+              onChange={e => handleTypeChange(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-48"
+            >
+              <option value="">All</option>
+              <option value="kp">KP Room</option>
+              <option value="dept">Department Room</option>
+              <option value="lab">Lab</option>
+              <option value="projector">Projector</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label style={{ fontWeight: 'bold' }}>Facility Type:</label><br />
-          <select value={selectedType} onChange={e => handleTypeChange(e.target.value)} style={{ padding: 6, width: 200, marginTop: 8 }}>
-            <option value="">All</option>
-            <option value="kp">KP Room</option>
-            <option value="dept">Department Room</option>
-            <option value="lab">Lab</option>
-            <option value="projector">Projector</option>
-          </select>
-        </div>
-      </div>
-
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filteredFacilities.map((fac, index) => {
-            const { name, type } = fac;
-            const bgColor = typeColors[type] || '#f9f9f9';
-            const borderColor = borderColors[type] || '#ccc';
-            const usage = facilityUsage[name]?.usage || [];
-
-            const label = type === 'room'
-              ? name.startsWith('KP') ? 'KP Room' : 'Department Room'
-              : type.charAt(0).toUpperCase() + type.slice(1);
-
-            return (
-              <div key={index} style={{ background: bgColor, border: `2px solid ${borderColor}`, borderRadius: 12, padding: 20, width: '70%' }}>
-                <h3 style={{ color: borderColor, textAlign: 'Center' }}>{label} - {name}</h3>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {periods.map((p, idx) => {
-                    const match = usage.find(u => u.periodNo === idx + 1);
-                    return (
-                      <div key={idx} style={{ padding: '6px 10px', background: match ? '#f8d7da' : '#e0f2f1', borderRadius: 6, minWidth: 100 }}>
-                        Period {idx + 1}<br />
-                        {p.start} - {p.end}<br />
-                        {match ? match.bookedBy : 'Free'}<br />
-                        {!match && isFutureOrToday(formattedSelectedDate, p.start) && (
-                          <button onClick={() => handleBook(name, type, idx)} style={{ marginTop: 4, padding: '2px 6px', fontSize: 12 }}>
-                            Book
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+        {loading ? (
+          <p className="text-center text-gray-500">Loading...</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {filtered.map(fac => {
+              const usage = facilityUsage[fac.name]?.usage || [];
+              const label = fac.type === 'room' ? (fac.name.startsWith('KP') ? 'KP Room' : 'Dept Room') : TYPE_LABELS[fac.type];
+              return (
+                <div key={fac.name} className={`rounded-xl border-2 p-4 ${typeColorClass[fac.type] || 'bg-gray-50 border-gray-200'}`}>
+                  <h3 className={`font-bold mb-3 text-center ${typeTextClass[fac.type]}`}>{label} — {fac.name}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {PERIOD_TIMES.map((p, idx) => {
+                      const match = usage.find(u => u.periodNo === idx + 1);
+                      const future = isFutureOrToday(dateStr, p.start);
+                      return (
+                        <div key={idx} className={`rounded-lg px-2 py-2 text-xs text-center min-w-[100px] border ${match ? 'bg-red-100 border-red-300' : 'bg-white border-gray-200'}`}>
+                          <div className="font-semibold">P{idx+1}</div>
+                          <div className="text-gray-500">{p.start}–{p.end}</div>
+                          <div className={match ? 'text-red-600 font-medium' : 'text-green-700'}>{match ? match.bookedBy : 'Free'}</div>
+                          {!match && future && (
+                            <button
+                              onClick={() => handleBook(fac.name, fac.type, idx)}
+                              className="mt-1 bg-primary text-white text-[10px] font-semibold px-2 py-0.5 rounded hover:bg-primary-dark transition-colors"
+                            >
+                              Book
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+            {filtered.length === 0 && <p className="text-center text-gray-500">No facilities found.</p>}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default FacilityWiseBooking;
+}

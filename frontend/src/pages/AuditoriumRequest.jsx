@@ -2,268 +2,147 @@ import { useState } from 'react';
 import Banner from '../components/Banner';
 import Sidebar from '../components/Sidebar';
 
-const SIDEBAR_WIDTH = 220;
-
-// Auditorium interfaces list
-const auditoriumList = [
+const AUDITORIUMS = [
   { name: 'Vivekananda Auditorium', location: 'Block A', capacity: 500, features: ['AC', 'Projector', 'Sound System'] },
   { name: 'Tag Auditorium', location: 'Block B', capacity: 300, features: ['Projector', 'Sound System'] }
 ];
 
-export default function AuditoriumRequest({ User }) {
-  const userId = User?.userId || '';
-  const [formData, setFormData] = useState({
-    date: '',
-    startTime: '',
-    endTime: '',
-    eventName: '',
-    venue: '',
-    additionalInfo: '',
-  });
+const today = new Date();
+const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+const maxDate = new Date(tomorrow); maxDate.setDate(tomorrow.getDate() + 29);
+const fmt = d => d.toISOString().split('T')[0];
+
+export default function AuditoriumRequest({ user }) {
+  const userId = user?.userId || JSON.parse(localStorage.getItem('user'))?.userId || '';
+  const [selected, setSelected] = useState(null);
+  const [form, setForm] = useState({ date: '', startTime: '', endTime: '', eventName: '', additionalInfo: '' });
   const [pdfFile, setPdfFile] = useState(null);
-  const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [selectedAuditorium, setSelectedAuditorium] = useState(null);
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const maxDate = new Date(tomorrow);
-  maxDate.setDate(maxDate.getDate() + 29);
-
-  const formatDate = (date) => date.toISOString().split("T")[0];
-
-  // When user clicks an auditorium interface
-  const handleAuditoriumClick = (audi) => {
-    setSelectedAuditorium(audi);
-    setFormData(prev => ({
-      ...prev,
-      venue: audi.name
-    }));
-    setRequestSubmitted(false);
+  const handleSelect = (audi) => {
+    setSelected(audi);
+    setSubmitted(false);
     setError('');
     setPdfFile(null);
+    setForm(f => ({ ...f, venue: audi.name }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleFileChange = (e) => {
+  const handleFileChange = e => {
     const file = e.target.files[0];
-    if (file && file.type !== "application/pdf") {
-      setError("Only PDF files are allowed.");
-      setPdfFile(null);
-      return;
-    }
-    if (file && file.size > 2 * 1024 * 1024) {
-      setError("PDF must be less than 2MB.");
-      setPdfFile(null);
-      return;
-    }
-    setError('');
-    setPdfFile(file);
+    if (file && file.type !== 'application/pdf') { setError('Only PDF files are allowed.'); setPdfFile(null); return; }
+    if (file && file.size > 2 * 1024 * 1024) { setError('PDF must be less than 2MB.'); setPdfFile(null); return; }
+    setError(''); setPdfFile(file);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-
-    if (formData.endTime <= formData.startTime) {
-      setError('End time must be after start time.');
-      return;
-    }
-    if (!pdfFile) {
-      setError('Please upload a supporting PDF (max 2MB).');
-      return;
-    }
-
+    if (form.endTime <= form.startTime) { setError('End time must be after start time.'); return; }
+    if (!pdfFile) { setError('Please upload a supporting PDF (max 2MB).'); return; }
+    setError('');
+    const fd = new FormData();
+    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    fd.append('userId', userId);
+    fd.append('venue', selected.name);
+    fd.append('pdf', pdfFile);
     try {
-      setError('');
-      const form = new FormData();
-      Object.entries(formData).forEach(([key, value]) => form.append(key, value));
-      form.append('userId', userId);
-      form.append('pdf', pdfFile);
-
       const res = await fetch('/api/audi-request', {
         method: 'POST',
-        body: form,
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: fd
       });
-
-      if (res.ok) {
-        setRequestSubmitted(true);
-        setPdfFile(null);
-      } else {
-        const data = await res.json();
-        setError(data.message || 'Submission failed');
-      }
-    } catch (err) {
-      setError('Something went wrong');
-    }
+      if (res.ok) { setSubmitted(true); setPdfFile(null); }
+      else { const d = await res.json(); setError(d.message || 'Submission failed'); }
+    } catch { setError('Something went wrong'); }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      background: 'linear-gradient(135deg, #f5f5dc 0%, #e3d9c6 100%)',
-      fontFamily: 'Segoe UI, Arial, sans-serif',
-      overflow: 'hidden'
-    }}>
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
+      <Banner />
       <Sidebar />
-      <div style={{ marginLeft: SIDEBAR_WIDTH }}>
-        <Banner style={{
-          width: `calc(100vw - ${SIDEBAR_WIDTH}px)`,
-          position: 'fixed',
-          top: 0,
-          left: SIDEBAR_WIDTH,
-          zIndex: 1100
-        }} />
+      <div className="pt-24 px-4 max-w-3xl mx-auto pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-6 mb-6 text-center">Auditorium Booking Request</h2>
 
-        <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto', marginTop: 96 }}>
-          <h2 style={{
-            paddingTop: 96,
-            color: '#7a5c1c',
-            fontSize: '2rem',
-            margin: '2rem 0 1.5rem 0',
-            letterSpacing: 1
-          }}>Auditorium Booking Request</h2>
-
-          {/* Auditorium interfaces list */}
-          <div style={{ marginBottom: 32 }}>
-            <h3 style={{ color: '#6d28d9', fontWeight: 600, marginBottom: 18 }}>Auditorium Interfaces</h3>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              {auditoriumList.map(audi => (
-                <div
-                  key={audi.name}
-                  style={{
-                    background: selectedAuditorium?.name === audi.name ? '#ede9fe' : '#f3f4f6',
-                    border: selectedAuditorium?.name === audi.name ? '2.5px solid #a78bfa' : '2px solid #ccc',
-                    borderRadius: 14,
-                    padding: 24,
-                    minWidth: 260,
-                    maxWidth: 320,
-                    boxShadow: '0 2px 8px #e0e0e0',
-                    cursor: 'pointer',
-                    transition: 'box-shadow 0.2s',
-                    marginBottom: 12
-                  }}
-                  onClick={() => handleAuditoriumClick(audi)}
-                  title="Select this auditorium"
-                >
-                  <div style={{ fontWeight: 700, fontSize: '1.15em', color: '#5b21b6', marginBottom: 6 }}>{audi.name}</div>
-                  <div style={{ color: '#444', marginBottom: 4 }}>
-                    <b>Location:</b> {audi.location}
-                  </div>
-                  <div style={{ color: '#444', marginBottom: 4 }}>
-                    <b>Capacity:</b> {audi.capacity}
-                  </div>
-                  <div style={{ color: '#444', marginBottom: 4 }}>
-                    <b>Features:</b> {audi.features.join(', ')}
-                  </div>
-                  {selectedAuditorium?.name === audi.name && (
-                    <div style={{ marginTop: 8, color: '#7c3aed', fontWeight: 500 }}>Selected</div>
-                  )}
-                </div>
-              ))}
+        <h3 className="text-base font-semibold text-indigo-700 mb-3">Select Auditorium</h3>
+        <div className="flex flex-wrap gap-4 mb-8">
+          {AUDITORIUMS.map(a => (
+            <div
+              key={a.name}
+              onClick={() => handleSelect(a)}
+              className={`rounded-xl border-2 p-5 flex-1 min-w-[240px] cursor-pointer transition-all ${
+                selected?.name === a.name
+                  ? 'border-indigo-400 bg-indigo-50 shadow-md'
+                  : 'border-gray-200 bg-white hover:border-indigo-200'
+              }`}
+            >
+              <div className="font-bold text-indigo-700 mb-1">{a.name}</div>
+              <div className="text-sm text-gray-600">Location: {a.location}</div>
+              <div className="text-sm text-gray-600">Capacity: {a.capacity}</div>
+              <div className="text-sm text-gray-600">Features: {a.features.join(', ')}</div>
+              {selected?.name === a.name && <div className="mt-2 text-indigo-600 font-semibold text-sm">Selected</div>}
             </div>
-          </div>
-
-          {/* Auditorium booking form */}
-          {selectedAuditorium && !requestSubmitted ? (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#f8fafc', borderRadius: 10, padding: 24, boxShadow: '0 2px 8px #e0e0e0' }}>
-              {error && <p style={{ color: 'red' }}>{error}</p>}
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <label style={{ flex: 1 }}>
-                  Date:
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    min={formatDate(tomorrow)}
-                    max={formatDate(maxDate)}
-                    required
-                    style={{ marginLeft: 8, padding: 5, borderRadius: 5, border: '1px solid #ccc' }}
-                  />
-                </label>
-                <label style={{ flex: 1 }}>
-                  Start Time:
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={formData.startTime}
-                    onChange={handleChange}
-                    required
-                    style={{ marginLeft: 8, padding: 5, borderRadius: 5, border: '1px solid #ccc' }}
-                  />
-                </label>
-                <label style={{ flex: 1 }}>
-                  End Time:
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={formData.endTime}
-                    onChange={handleChange}
-                    required
-                    style={{ marginLeft: 8, padding: 5, borderRadius: 5, border: '1px solid #ccc' }}
-                  />
-                </label>
-              </div>
-
-              <label>
-                Event Name:
-                <input
-                  type="text"
-                  name="eventName"
-                  value={formData.eventName}
-                  onChange={handleChange}
-                  required
-                  style={{ marginLeft: 8, padding: 5, borderRadius: 5, border: '1px solid #ccc', width: 220 }}
-                  placeholder="Event Name"
-                />
-              </label>
-
-              <label>
-                Additional Information:
-                <textarea
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleChange}
-                  rows={3}
-                  style={{ marginLeft: 8, padding: 5, borderRadius: 5, border: '1px solid #ccc', width: 220, minHeight: 40 }}
-                  placeholder="Any extra details"
-                />
-              </label>
-
-              <label>
-                Supporting PDF (max 2MB):
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileChange}
-                  required
-                  style={{ marginLeft: 8 }}
-                />
-              </label>
-
-              <button style={{ color: 'white', background: '#6d28d9', fontWeight: 600, borderRadius: 6, padding: '8px 18px', border: 'none', marginTop: 8 }} type="submit">
-                Submit Request
-              </button>
-            </form>
-          ) : null}
-
-          {requestSubmitted && (
-            <div style={{ marginTop: '2rem', textAlign: 'center', backgroundColor: '#f0f0f0', padding: '1rem', borderRadius: '8px' }}>
-              <h3 style={{ color: 'green' }}>Booking Request Submitted!</h3>
-              <p>Your request is awaiting <strong>HOD approval</strong>.</p>
-            </div>
-          )}
+          ))}
         </div>
+
+        {selected && !submitted && (
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
+            <h3 className="font-bold text-primary text-base mb-1">Booking Details — {selected.name}</h3>
+            {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700">Date</label>
+                <input type="date" name="date" value={form.date} onChange={handleChange}
+                  min={fmt(tomorrow)} max={fmt(maxDate)} required
+                  className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700">Start Time</label>
+                <input type="time" name="startTime" value={form.startTime} onChange={handleChange} required
+                  className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700">End Time</label>
+                <input type="time" name="endTime" value={form.endTime} onChange={handleChange} required
+                  className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Event Name</label>
+              <input type="text" name="eventName" value={form.eventName} onChange={handleChange} required
+                placeholder="Enter event name"
+                className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Additional Information</label>
+              <textarea name="additionalInfo" value={form.additionalInfo} onChange={handleChange} rows={3}
+                placeholder="Any extra details"
+                className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Supporting PDF (max 2MB)</label>
+              <input type="file" accept="application/pdf" onChange={handleFileChange}
+                className="text-sm" required />
+            </div>
+
+            <button type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-colors">
+              Submit Request
+            </button>
+          </form>
+        )}
+
+        {submitted && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-6 text-center mt-4">
+            <h3 className="text-green-700 font-bold text-lg mb-2">Request Submitted!</h3>
+            <p className="text-gray-600">Your request is awaiting admin approval.</p>
+          </div>
+        )}
       </div>
     </div>
   );

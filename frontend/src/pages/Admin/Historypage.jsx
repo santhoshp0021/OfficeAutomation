@@ -1,403 +1,216 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Banner from '../../components/Banner';
 import Sidebar from '../../components/Sidebar';
+import api from '../../utils/api';
 
-const getPeriodInfo = (periodId) => {
-  // periodId format: "dayNo-periodNo" (e.g., "3-5")
+const DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function getPeriodInfo(periodId) {
   if (!periodId) return { periodNo: '', periodDay: '' };
-  const [no,day] = periodId.split('-');
-  const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  return {
-    periodNo: no || '',
-    periodDay: days[parseInt(day, 10)] || ''
-  };
-};
+  const [no, day] = periodId.split('-');
+  return { periodNo: no || '', periodDay: DAYS[parseInt(day, 10)] || '' };
+}
 
-const Historypage = ({User}) => {
+function downloadCSV(header, rows, filename) {
+  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+export default function Historypage() {
   const [history, setHistory] = useState([]);
   const [hallRequests, setHallRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hallLoading, setHallLoading] = useState(true);
   const [error, setError] = useState('');
-  const [hallReqLoading, setHallReqLoading] = useState(true);
-  const [hallReqError, setHallReqError] = useState('');
+  const [hallError, setHallError] = useState('');
 
-  // New: filter state
-  const [hallNameFilter, setHallNameFilter] = useState('');
+  const [facilityFilter, setFacilityFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  // New: booking history filters
-  const [facilityNameFilter, setFacilityNameFilter] = useState('');
-  const [bookingDateFilter, setBookingDateFilter] = useState('');
+  const [hallNameFilter, setHallNameFilter] = useState('');
+  const [hallDateFilter, setHallDateFilter] = useState('');
 
-  // Fetch booking history with filters
   useEffect(() => {
-    setLoading(true);
-    setError('');
-    // Build query string
-    const params = [];
-    if (facilityNameFilter) params.push(`facilityName=${encodeURIComponent(facilityNameFilter)}`);
-    if (bookingDateFilter) params.push(`date=${encodeURIComponent(bookingDateFilter)}`);
-    const query = params.length ? `?${params.join('&')}` : '';
-    fetch(`http://localhost:5000/api/booking-history${query}`)
-      .then(async res => {
-        if (!res.ok) {
-          setError('Failed to fetch booking history');
-          setHistory([]);
-          setLoading(false);
-          return;
-        }
-        const text = await res.text();
-        try {
-          const data = JSON.parse(text);
-          console.log(data);
-          setHistory(Array.isArray(data) ? data : []);
-        } catch {
-          setError('Invalid response from server');
-          setHistory([]);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Could not connect to backend');
-        setHistory([]);
-        setLoading(false);
-      });
-  }, [facilityNameFilter, bookingDateFilter]);
+    setLoading(true); setError('');
+    const params = {};
+    if (facilityFilter) params.facilityName = facilityFilter;
+    if (dateFilter) params.date = dateFilter;
+    api.get('/booking-history', { params })
+      .then(res => setHistory(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setError('Failed to fetch booking history'))
+      .finally(() => setLoading(false));
+  }, [facilityFilter, dateFilter]);
 
-  // Fetch hall requests with filters
   useEffect(() => {
-    setHallReqLoading(true);
-    setHallReqError('');
-    // Build query string
-    const params = [];
-    if (hallNameFilter) params.push(`hallName=${encodeURIComponent(hallNameFilter)}`);
-    if (dateFilter) params.push(`date=${encodeURIComponent(dateFilter)}`);
-    const query = params.length ? `?${params.join('&')}` : '';
-    fetch(`http://localhost:5000/api/hall-requests/filter${query}`)
-      .then(async res => {
-        if (!res.ok) {
-          setHallReqError('Failed to fetch hall requests');
-          setHallRequests([]);
-          setHallReqLoading(false);
-          return;
-        }
-        const text = await res.text();
-        try {
-          const data = JSON.parse(text);
-          setHallRequests(Array.isArray(data) ? data : []);
-        } catch {
-          setHallReqError('Invalid response from server');
-          setHallRequests([]);
-        }
-        setHallReqLoading(false);
-      })
-      .catch(() => {
-        setHallReqError('Could not connect to backend');
-        setHallRequests([]);
-        setHallReqLoading(false);
-      });
-  }, [hallNameFilter, dateFilter]);
+    setHallLoading(true); setHallError('');
+    const params = {};
+    if (hallNameFilter) params.hallName = hallNameFilter;
+    if (hallDateFilter) params.date = hallDateFilter;
+    api.get('/hall-requests/filter', { params })
+      .then(res => setHallRequests(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setHallError('Failed to fetch hall requests'))
+      .finally(() => setHallLoading(false));
+  }, [hallNameFilter, hallDateFilter]);
 
-  // Download booking history as CSV
-  const handleDownload = () => {
-    const header = ['User', 'Period ID', 'Period Day', 'Period No', 'Facility Name', 'Facility Type', 'Booked/Free', 'Usage Date','Date'];
+  const handleDownloadHistory = () => {
+    const header = ['User','Period ID','Period Day','Period No','Facility Name','Facility Type','Usage Date','Booked/Free','Logged At'];
     const rows = history.map(rec => {
       const { periodNo, periodDay } = getPeriodInfo(rec.periodId);
       return [
         rec.userId?.userId || rec.userId || '',
-        rec.periodId,
-        periodDay,
-        periodNo,
-        rec.facility?.name || '',
-        rec.facility?.type || '',
-        rec.facility?.free === false ? 'Booked' : 'Freed',
+        rec.periodId, periodDay, periodNo,
+        rec.facility?.name || '', rec.facility?.type || '',
         rec.usageDate || '',
-        rec.date ? new Date(rec.date).toLocaleString() : ''
-      ].join(',');
+        rec.facility?.free === false ? 'Booked' : 'Freed',
+        rec.date ? new Date(rec.date).toLocaleString() : '',
+      ];
     });
-    const csv = [header.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'booking_history.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadCSV(header, rows, 'booking_history.csv');
   };
 
-  // Download hall requests as CSV
-  const handleDownloadHallRequests = () => {
-    const header = ['User', 'Hall Name', 'Date', 'Start Time', 'End Time', 'Status', 'Booked At'];
-    const rows = hallRequests.map(req => [
-      req.userId,
-      req.hallName,
-      req.date,
-      req.startTime,
-      req.endTime,
-      req.status,
-      req.bookedAt ? new Date(req.bookedAt).toLocaleString() : ''
-    ].join(','));
-    const csv = [header.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'hall_requests.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleDownloadHall = () => {
+    const header = ['User','Hall Name','Date','Start Time','End Time','Status','Booked At'];
+    const rows = hallRequests.map(r => [
+      r.userId, r.hallName, r.date, r.startTime, r.endTime, r.status,
+      r.bookedAt ? new Date(r.bookedAt).toLocaleString() : ''
+    ]);
+    downloadCSV(header, rows, 'hall_requests.csv');
   };
 
   return (
-    <div style={{
-      paddingTop:96,
-      minHeight: '100vh',
-      minWidth: '100vw',
-      background: 'linear-gradient(135deg, #f5f5dc 0%, #e3d9c6 100%)',
-      fontFamily: 'Segoe UI, Arial, sans-serif',
-      padding: 0,
-      margin: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center'
-    }}>
-      <Banner/>
-     <Sidebar />
-      <h2 style={{
-         paddingTop:96,
-        color: '#7a5c1c',
-        fontSize: '2rem',
-        margin: '2rem 0 1.5rem 0',
-        letterSpacing: 1
-      }}>
-        Booking History
-      </h2>
-      {/* Booking History Filter UI */}
-      <div style={{ marginBottom: 18, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Filter by Facility Name"
-          value={facilityNameFilter}
-          onChange={e => setFacilityNameFilter(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: 6,
-            border: '1px solid #e3d9c6',
-            fontSize: '1rem'
-          }}
-        />
-        <input
-          type="date"
-          value={bookingDateFilter}
-          onChange={e => setBookingDateFilter(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: 6,
-            border: '1px solid #e3d9c6',
-            fontSize: '1rem'
-          }}
-        />
-        <button
-          style={{
-            background: '#b6894a',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '0.5rem 1.2rem',
-            fontWeight: 600,
-            fontSize: '1rem',
-            cursor: 'pointer'
-          }}
-          onClick={() => { setFacilityNameFilter(''); setBookingDateFilter(''); }}
-        >
-          Clear Filters
-        </button>
-      </div>
-      <div style={{
-        background: '#fff',
-        borderRadius: 16,
-        boxShadow: '0 4px 16px rgba(182,137,74,0.10)',
-        padding: 24,
-        width: '100%',
-        maxWidth: 1100,
-        marginBottom: 40
-      }}>
-        {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
-        {loading && <div>Loading...</div>}
-        {!loading && !error && history.length === 0 && <div>No booking history found.</div>}
-        {!loading && !error && history.length > 0 && (
-          <>
-            <button
-              style={{
-                background: '#388e3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '0.6rem 1.4rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '1rem',
-                marginBottom: 18
-              }}
-              onClick={handleDownload}
-            >
-              Download Table
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
+      <Banner />
+      <Sidebar />
+      <div className="pt-24 px-4 pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-4 mb-6 text-center">History &amp; Reports</h2>
+
+        {/* Booking History */}
+        <section className="mb-10">
+          <h3 className="text-lg font-bold text-primary mb-3">Booking History</h3>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <input type="text" placeholder="Filter by facility name" value={facilityFilter}
+              onChange={e => setFacilityFilter(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            <button onClick={() => { setFacilityFilter(''); setDateFilter(''); }}
+              className="bg-primary-light hover:bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+              Clear
             </button>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '1rem'
-            }}>
-              <thead>
-                <tr style={{ background: '#e3d9c6' }}>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>User</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Period ID</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Period Day</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Period No</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Facility Name</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Facility Type</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Usage Date</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Booked/Free</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((rec, idx) => {
-                  const { periodNo, periodDay } = getPeriodInfo(rec.periodId);
-                  return (
-                    <tr key={rec._id || idx} style={{ background: '#fffbe6' }}>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.userId?.userId || rec.userId || ''}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.periodId}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{periodDay}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{periodNo}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.facility?.name || ''}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.facility?.type || ''}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.usageDate || ''}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.facility?.free === false ? 'Booked' : 'Freed'}</td>
-                      <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{rec.date ? new Date(rec.date).toLocaleString() : ''}</td>
+          </div>
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
+            {error && <p className="text-red-600 p-4">{error}</p>}
+            {loading && <p className="text-gray-400 p-4">Loading...</p>}
+            {!loading && !error && history.length === 0 && <p className="text-gray-500 p-4">No booking history found.</p>}
+            {!loading && !error && history.length > 0 && (
+              <>
+                <div className="p-3 border-b border-beige-100">
+                  <button onClick={handleDownloadHistory}
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                    Download CSV
+                  </button>
+                </div>
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-beige-100">
+                      {['User','Period ID','Day','P#','Facility','Type','Usage Date','Status','Logged At'].map(h => (
+                        <th key={h} className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-beige-200">{h}</th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </>
-        )}
-      </div>
-      <h2 style={{
-        color: '#7a5c1c',
-        fontSize: '2rem',
-        margin: '2rem 0 1.5rem 0',
-        letterSpacing: 1
-      }}>
-        Hall Requests
-      </h2>
-      {/* Filter UI */}
-      <div style={{ marginBottom: 18, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Filter by Hall Name"
-          value={hallNameFilter}
-          onChange={e => setHallNameFilter(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: 6,
-            border: '1px solid #e3d9c6',
-            fontSize: '1rem'
-          }}
-        />
-        <input
-          type="date"
-          value={dateFilter}
-          onChange={e => setDateFilter(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: 6,
-            border: '1px solid #e3d9c6',
-            fontSize: '1rem'
-          }}
-        />
-        <button
-          style={{
-            background: '#b6894a',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '0.5rem 1.2rem',
-            fontWeight: 600,
-            fontSize: '1rem',
-            cursor: 'pointer'
-          }}
-          onClick={() => { setHallNameFilter(''); setDateFilter(''); }}
-        >
-          Clear Filters
-        </button>
-      </div>
-      <div style={{
-        background: '#fff',
-        borderRadius: 16,
-        boxShadow: '0 4px 16px rgba(182,137,74,0.10)',
-        padding: 24,
-        width: '100%',
-        maxWidth: 1100
-      }}>
-        {hallReqError && <div style={{ color: 'red', marginBottom: 16 }}>{hallReqError}</div>}
-        {hallReqLoading && <div>Loading...</div>}
-        {!hallReqLoading && !hallReqError && hallRequests.length === 0 && <div>No hall requests found.</div>}
-        {!hallReqLoading && !hallReqError && hallRequests.length > 0 && (
-          <>
-            <button
-              style={{
-                background: '#388e3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '0.6rem 1.4rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '1rem',
-                marginBottom: 18
-              }}
-              onClick={handleDownloadHallRequests}
-            >
-              Download Table
+                  </thead>
+                  <tbody>
+                    {history.map((rec, idx) => {
+                      const { periodNo, periodDay } = getPeriodInfo(rec.periodId);
+                      return (
+                        <tr key={rec._id || idx} className="even:bg-beige-50 hover:bg-beige-100 transition-colors">
+                          <td className="px-3 py-2 border-b border-beige-100">{rec.userId?.userId || rec.userId || ''}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{rec.periodId}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{periodDay}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{periodNo}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{rec.facility?.name || ''}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{rec.facility?.type || ''}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">{rec.usageDate || ''}</td>
+                          <td className="px-3 py-2 border-b border-beige-100">
+                            <span className={rec.facility?.free === false ? 'text-red-600 font-semibold' : 'text-green-700 font-semibold'}>
+                              {rec.facility?.free === false ? 'Booked' : 'Freed'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 border-b border-beige-100 text-xs text-gray-500">{rec.date ? new Date(rec.date).toLocaleString() : ''}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Hall Requests */}
+        <section>
+          <h3 className="text-lg font-bold text-primary mb-3">Hall Requests</h3>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <input type="text" placeholder="Filter by hall name" value={hallNameFilter}
+              onChange={e => setHallNameFilter(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            <input type="date" value={hallDateFilter} onChange={e => setHallDateFilter(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            <button onClick={() => { setHallNameFilter(''); setHallDateFilter(''); }}
+              className="bg-primary-light hover:bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+              Clear
             </button>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '1rem'
-            }}>
-              <thead>
-                <tr style={{ background: '#e3d9c6' }}>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>User</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Hall Name</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Date</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Start Time</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>End Time</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Status</th>
-                  <th style={{ padding: 10, border: '1px solid #d1c4a3' }}>Booked At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hallRequests.map((req, idx) => (
-                  <tr key={req._id || idx} style={{ background: '#fffbe6' }}>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.userId}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.hallName}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.date}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.startTime}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.endTime}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.status}</td>
-                    <td style={{ padding: 10, border: '1px solid #e3d9c6' }}>{req.bookedAt ? new Date(req.bookedAt).toLocaleString() : ''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+          </div>
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
+            {hallError && <p className="text-red-600 p-4">{hallError}</p>}
+            {hallLoading && <p className="text-gray-400 p-4">Loading...</p>}
+            {!hallLoading && !hallError && hallRequests.length === 0 && <p className="text-gray-500 p-4">No hall requests found.</p>}
+            {!hallLoading && !hallError && hallRequests.length > 0 && (
+              <>
+                <div className="p-3 border-b border-beige-100">
+                  <button onClick={handleDownloadHall}
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                    Download CSV
+                  </button>
+                </div>
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-beige-100">
+                      {['User','Hall','Date','Start','End','Status','Booked At'].map(h => (
+                        <th key={h} className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-beige-200">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hallRequests.map((req, idx) => (
+                      <tr key={req._id || idx} className="even:bg-beige-50 hover:bg-beige-100 transition-colors">
+                        <td className="px-3 py-2 border-b border-beige-100">{req.userId}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{req.hallName}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{req.date}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{req.startTime}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{req.endTime}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">
+                          <span className={
+                            req.status === 'accepted' ? 'text-green-700 font-semibold' :
+                            req.status === 'rejected' ? 'text-red-600 font-semibold' :
+                            'text-yellow-700 font-semibold'
+                          }>{req.status}</span>
+                        </td>
+                        <td className="px-3 py-2 border-b border-beige-100 text-xs text-gray-500">
+                          {req.bookedAt ? new Date(req.bookedAt).toLocaleString() : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
-};
-
-export default Historypage;
+}

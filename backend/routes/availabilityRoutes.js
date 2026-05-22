@@ -1,99 +1,74 @@
 const express = require('express');
 const router = express.Router();
-const { Facility } = require('../models/BookingHistory');
+const Facility = require('../models/Facility');
 const Weektable = require('../models/Weektable');
-const {getCurrentWeekStart} = require('../utils');
+const { getCurrentWeekStart } = require('../utils');
+const { auth } = require('../middleware/auth');
 
-router.get('/rooms', async (req, res) => {
+router.get('/rooms', auth, async (req, res) => {
   const { periodId } = req.query;
   if (!periodId) return res.status(400).json({ error: 'periodId required' });
-
   try {
     const weekStart = getCurrentWeekStart();
     const weektables = await Weektable.find({ weekStart });
-
-    const usedRoomNos = new Set();
+    const usedRooms = new Set();
     for (const wt of weektables) {
       for (const p of wt.periods) {
-        if (p.periodId === periodId && p.roomNo) {
-          usedRoomNos.add(p.roomNo.trim().toLowerCase());
-        }
+        if (p.periodId === periodId && p.roomNo) usedRooms.add(p.roomNo.trim().toLowerCase());
       }
     }
-
     const allRooms = await Facility.find({ type: 'room', bookable: true });
-    const rooms = allRooms.map(room => ({
-      name: room.name,
-      type: room.type,
-      free: !usedRoomNos.has(room.name.trim().toLowerCase())
-    }));
-
-    res.json(rooms);
+    res.json(allRooms.map(r => ({
+      name: r.name,
+      type: r.type,
+      free: !usedRooms.has(r.name.trim().toLowerCase())
+    })));
   } catch (err) {
     res.status(500).json({ error: 'Error fetching rooms', details: err.message });
   }
 });
 
-
-router.get('/labs', async (req, res) => {
+router.get('/labs', auth, async (req, res) => {
   const { periodId } = req.query;
   if (!periodId) return res.status(400).json({ error: 'periodId required' });
-
   try {
     const weekStart = getCurrentWeekStart();
     const weektables = await Weektable.find({ weekStart });
-
     const usedLabs = new Set();
     for (const wt of weektables) {
       for (const p of wt.periods) {
-        if (p.periodId === periodId && p.lab) {
-          usedLabs.add(p.lab.trim().toLowerCase());
-        }
+        if (p.periodId === periodId && p.lab) usedLabs.add(p.lab.trim().toLowerCase());
       }
     }
-
     const allLabs = await Facility.find({ type: 'lab', bookable: true });
-    const labs = allLabs.map(lab => ({
-      name: lab.name,
-      type: lab.type,
-      free: !usedLabs.has(lab.name.trim().toLowerCase())
-    }));
-
-    res.json(labs);
+    res.json(allLabs.map(l => ({
+      name: l.name,
+      type: l.type,
+      free: !usedLabs.has(l.name.trim().toLowerCase())
+    })));
   } catch (err) {
     res.status(500).json({ error: 'Error fetching labs', details: err.message });
   }
 });
 
-router.get('/projectors', async (req, res) => {
+router.get('/projectors', auth, async (req, res) => {
   const { periodId } = req.query;
   if (!periodId) return res.status(400).json({ error: 'periodId required' });
-
   try {
     const weekStart = getCurrentWeekStart();
-
-    // Fetch all weektable docs for current week
     const weektables = await Weektable.find({ weekStart });
-
-    // Find all projectors used in the given periodId
-    const usedProjectorsSet = new Set();
+    const usedProjectors = new Set();
     for (const wt of weektables) {
       for (const p of wt.periods) {
         if (p.periodId === periodId && p.projector?.trim()) {
-          usedProjectorsSet.add(p.projector.trim().toLowerCase());
+          usedProjectors.add(p.projector.trim().toLowerCase());
         }
       }
     }
-
-    // Return only the names (and type for consistency)
-    const bookedProjectors = Array.from(usedProjectorsSet).map(name => ({
-      name,
-      type: 'projector'
-    }));
-
-    res.json(bookedProjectors);
+    res.json(Array.from(usedProjectors).map(name => ({ name, type: 'projector' })));
   } catch (err) {
     res.status(500).json({ error: 'Error fetching projector status', details: err.message });
   }
 });
+
 module.exports = router;

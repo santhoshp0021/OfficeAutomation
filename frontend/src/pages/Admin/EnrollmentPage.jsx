@@ -1,532 +1,216 @@
-
-import React, { useState, useEffect } from "react";
-import Sidebar from '../../components/Sidebar';
+import { useState, useEffect } from 'react';
 import Banner from '../../components/Banner';
-const EnrollmentPage = () => {
-  const [userId, setUserId] = useState("");
-  const [courseCode, setCourseCode] = useState("");
-  const [courseName, setCourseName] = useState("");
-  const [staffName, setStaffName] = useState("");
+import Sidebar from '../../components/Sidebar';
+import api from '../../utils/api';
+
+export default function EnrollmentPage() {
+  const [userId, setUserId] = useState('');
+  const [courseCode, setCourseCode] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [staffName, setStaffName] = useState('');
   const [lab, setLab] = useState(false);
   const [courses, setCourses] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [editIdx, setEditIdx] = useState(null);
-  const [editCourse, setEditCourse] = useState({ courseCode: "", courseName: "", staffName: "", lab: false });
+  const [editCourse, setEditCourse] = useState({ courseCode: '', courseName: '', staffName: '', lab: false });
   const [allEnrollments, setAllEnrollments] = useState([]);
 
-  // Color theme
-  const theme = {
-    primary: "#2d6cdf",
-    secondary: "#fff8ee",
-    accent: "#f7b731",
-    danger: "#e74c3c",
-    text: "#222",
-    border: "#e0e0e0",
-    bisque: "bisque"
-  };
+  const notify = (msg, err = false) => { setMessage(msg); setIsError(err); };
 
-  // Fetch all enrollments on mount or after submit/delete
   const fetchEnrollments = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/enrollment/all");
-      if (res.ok) {
-        const data = await res.json();
-        setAllEnrollments(data);
-      }
-    } catch (err) {
-      // Optionally handle error
-    }
+      const res = await api.get('/enrollment/all');
+      setAllEnrollments(res.data);
+    } catch { setAllEnrollments([]); }
   };
 
-  useEffect(() => {
-    fetchEnrollments();
-  }, []);
+  useEffect(() => { fetchEnrollments(); }, []);
 
   const handleAddCourse = (e) => {
     e.preventDefault();
-    if (courseCode && courseName && staffName) {
-      setCourses([
-        ...courses,
-        { courseCode, courseName, staffName, lab }
-      ]);
-      setCourseCode("");
-      setCourseName("");
-      setStaffName("");
-      setLab(false);
-    }
-  };
-
-  const handleEditClick = (idx) => {
-    setEditIdx(idx);
-    setEditCourse({ ...courses[idx] });
-  };
-
-  const handleEditChange = (e) => {
-    const { name, type, checked, value } = e.target;
-    setEditCourse({
-      ...editCourse,
-      [name]: type === "checkbox" ? checked : value
-    });
+    if (!courseCode || !courseName || !staffName) return;
+    setCourses(prev => [...prev, { courseCode, courseName, staffName, lab }]);
+    setCourseCode(''); setCourseName(''); setStaffName(''); setLab(false);
   };
 
   const handleEditSave = (idx) => {
-    const updated = [...courses];
-    updated[idx] = { ...editCourse };
-    setCourses(updated);
+    setCourses(prev => prev.map((c, i) => i === idx ? { ...editCourse } : c));
     setEditIdx(null);
-    setEditCourse({ courseCode: "", courseName: "", staffName: "", lab: false });
-  };
-
-  const handleEditCancel = () => {
-    setEditIdx(null);
-    setEditCourse({ courseCode: "", courseName: "", staffName: "", lab: false });
-  };
-
-  const handleDeleteCourse = (idx) => {
-    setCourses(courses.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    if (!userId || courses.length === 0) {
-      setMessage("Please enter User ID and add at least one course.");
-      return;
-    }
+    if (!userId || courses.length === 0) { notify('Enter User ID and add at least one course.', true); return; }
     try {
-      const res = await fetch("http://localhost:5000/api/enrollment/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, enrolled: courses }),
-      });
-      if (res.ok) {
-        setMessage("Enrollment successful!");
-        setCourses([]);
-        fetchEnrollments();
-      } else {
-        const data = await res.json();
-        setMessage(data.error || "Error enrolling.");
-      }
-    } catch (err) {
-      setMessage("Server error.");
-    }
+      await api.post('/enrollment/', { userId, enrolled: courses });
+      notify('Enrollment successful!');
+      setCourses([]); setUserId('');
+      fetchEnrollments();
+    } catch (err) { notify(err.response?.data?.error || 'Error enrolling.', true); }
   };
 
-  // Delete enrollment by userId
   const handleDelete = async (delUserId) => {
-    if (!window.confirm(`Delete enrollment for userId: ${delUserId}?`)) return;
+    if (!window.confirm(`Delete enrollment for ${delUserId}?`)) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/enrollment/${delUserId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setMessage("Enrollment deleted.");
-        fetchEnrollments();
-      } else {
-        setMessage("Error deleting enrollment.");
-      }
-    } catch (err) {
-      setMessage("Server error.");
-    }
+      await api.delete(`/enrollment/${delUserId}`);
+      notify('Enrollment deleted.');
+      fetchEnrollments();
+    } catch { notify('Failed to delete.', true); }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100vw",
-        background: theme.bisque,
-        padding: 0,
-        margin: 0,
-        position: "absolute",
-        left: 0,
-        top: 0
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 900,
-          margin: "2rem auto",
-          background: theme.secondary,
-          borderRadius: 16,
-          boxShadow: "0 2px 16px #0002",
-          padding: 36,
-          color: theme.text,
-          fontFamily: "Segoe UI, Arial, sans-serif"
-        }}
-      >
-        <Banner/>
-        <Sidebar/>
-        <h2 style={{ paddingTop:96,color: theme.primary, marginBottom: 24, textAlign: "center" }}>Enroll in Courses</h2>
-        <form onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 18 }}>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500 }}>User ID:</label>
-              <input
-                type="text"
-                value={userId}
-                onChange={e => setUserId(e.target.value)}
-                required
-                style={{
-                  marginLeft: 10,
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: `1px solid ${theme.border}`,
-                  width: "80%",
-                  background: "#fff"
-                }}
-              />
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
+      <Banner />
+      <Sidebar />
+      <div className="pt-24 px-4 pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-4 mb-6 text-center">Enrollment Management</h2>
+
+        <div className="bg-white rounded-2xl shadow p-6 mb-8 max-w-4xl mx-auto">
+          <h3 className="text-base font-bold text-primary mb-4">Enroll User in Courses</h3>
+
+          {message && (
+            <p className={`text-sm px-3 py-2 rounded-lg mb-4 ${isError ? 'text-red-600 bg-red-50' : 'text-green-700 bg-green-50'}`}>
+              {message}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">User ID</label>
+              <input type="text" value={userId} onChange={e => setUserId(e.target.value)} placeholder="Enter user ID" required
+                className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 max-w-xs" />
             </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500 }}>Course Code:</label>
-              <input
-                type="text"
-                value={courseCode}
-                onChange={e => setCourseCode(e.target.value)}
-                style={{
-                  marginLeft: 10,
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: `1px solid ${theme.border}`,
-                  width: "80%",
-                  background: "#fff"
-                }}
-              />
+
+            <div className="border border-beige-100 rounded-xl p-4 bg-beige-50">
+              <h4 className="text-sm font-bold text-gray-700 mb-3">Add Course</h4>
+              <form onSubmit={handleAddCourse} className="flex flex-wrap gap-3 items-end">
+                <div className="flex flex-col gap-1 min-w-[120px]">
+                  <label className="text-xs font-semibold text-gray-600">Course Code</label>
+                  <input value={courseCode} onChange={e => setCourseCode(e.target.value)} placeholder="CS101"
+                    className="border border-beige-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
+                <div className="flex flex-col gap-1 min-w-[150px]">
+                  <label className="text-xs font-semibold text-gray-600">Course Name</label>
+                  <input value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Data Structures"
+                    className="border border-beige-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
+                <div className="flex flex-col gap-1 min-w-[130px]">
+                  <label className="text-xs font-semibold text-gray-600">Staff Name</label>
+                  <input value={staffName} onChange={e => setStaffName(e.target.value)} placeholder="Dr. Smith"
+                    className="border border-beige-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
+                <div className="flex items-center gap-2 pb-1">
+                  <input type="checkbox" checked={lab} onChange={e => setLab(e.target.checked)} className="w-4 h-4 accent-primary" />
+                  <label className="text-sm font-semibold text-gray-600">Lab</label>
+                </div>
+                <button type="submit"
+                  className="bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                  Add Course
+                </button>
+              </form>
             </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500 }}>Course Name:</label>
-              <input
-                type="text"
-                value={courseName}
-                onChange={e => setCourseName(e.target.value)}
-                style={{
-                  marginLeft: 10,
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: `1px solid ${theme.border}`,
-                  width: "80%",
-                  background: "#fff"
-                }}
-              />
-            </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500 }}>Staff Name:</label>
-              <input
-                type="text"
-                value={staffName}
-                onChange={e => setStaffName(e.target.value)}
-                style={{
-                  marginLeft: 10,
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: `1px solid ${theme.border}`,
-                  width: "80%",
-                  background: "#fff"
-                }}
-              />
-            </div>
-            <div style={{ flex: 1, minWidth: 120, display: "flex", alignItems: "center" }}>
-              <label style={{ fontWeight: 500, marginRight: 8 }}>Lab:</label>
-              <input
-                type="checkbox"
-                checked={lab}
-                onChange={e => setLab(e.target.checked)}
-                style={{ width: 18, height: 18 }}
-              />
-            </div>
-            <div style={{ display: "flex", alignItems: "flex-end" }}>
-              <button
-                onClick={handleAddCourse}
-                style={{
-                  background: theme.primary,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "10px 22px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  marginLeft: 10,
-                  marginBottom: 2
-                }}
-                type="button"
-              >
-                Add Course
-              </button>
-            </div>
-          </div>
-          {courses.length > 0 && (
-            <div style={{ marginTop: 10, marginBottom: 18 }}>
-              <h4 style={{ color: theme.primary }}>Courses to Enroll:</h4>
-              <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8 }}>
-                <thead>
-                  <tr style={{ background: theme.secondary }}>
-                    <th style={{ padding: 8, borderBottom: `1px solid ${theme.border}` }}>Course Code</th>
-                    <th style={{ padding: 8, borderBottom: `1px solid ${theme.border}` }}>Course Name</th>
-                    <th style={{ padding: 8, borderBottom: `1px solid ${theme.border}` }}>Staff Name</th>
-                    <th style={{ padding: 8, borderBottom: `1px solid ${theme.border}` }}>Lab</th>
-                    <th style={{ padding: 8, borderBottom: `1px solid ${theme.border}` }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((c, idx) =>
-                    editIdx === idx ? (
-                      <tr key={idx} style={{ background: "#f9fafc" }}>
-                        <td style={{ padding: 6 }}>
-                          <input
-                            name="courseCode"
-                            value={editCourse.courseCode}
-                            onChange={handleEditChange}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: 4,
-                              border: `1px solid ${theme.border}`,
-                              width: "90%"
-                            }}
-                          />
+
+            {courses.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-beige-100">
+                      {['Code','Name','Staff','Lab',''].map(h => (
+                        <th key={h} className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-beige-200">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {courses.map((c, idx) => editIdx === idx ? (
+                      <tr key={idx} className="bg-blue-50">
+                        <td className="px-2 py-1 border-b border-beige-100">
+                          <input value={editCourse.courseCode} onChange={e => setEditCourse(p => ({...p, courseCode: e.target.value}))}
+                            className="border border-beige-200 rounded px-2 py-1 text-sm w-24" />
                         </td>
-                        <td style={{ padding: 6 }}>
-                          <input
-                            name="courseName"
-                            value={editCourse.courseName}
-                            onChange={handleEditChange}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: 4,
-                              border: `1px solid ${theme.border}`,
-                              width: "90%"
-                            }}
-                          />
+                        <td className="px-2 py-1 border-b border-beige-100">
+                          <input value={editCourse.courseName} onChange={e => setEditCourse(p => ({...p, courseName: e.target.value}))}
+                            className="border border-beige-200 rounded px-2 py-1 text-sm w-36" />
                         </td>
-                        <td style={{ padding: 6 }}>
-                          <input
-                            name="staffName"
-                            value={editCourse.staffName}
-                            onChange={handleEditChange}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: 4,
-                              border: `1px solid ${theme.border}`,
-                              width: "90%"
-                            }}
-                          />
+                        <td className="px-2 py-1 border-b border-beige-100">
+                          <input value={editCourse.staffName} onChange={e => setEditCourse(p => ({...p, staffName: e.target.value}))}
+                            className="border border-beige-200 rounded px-2 py-1 text-sm w-28" />
                         </td>
-                        <td style={{ padding: 6, textAlign: "center" }}>
-                          <input
-                            name="lab"
-                            type="checkbox"
-                            checked={!!editCourse.lab}
-                            onChange={handleEditChange}
-                            style={{ width: 18, height: 18 }}
-                          />
+                        <td className="px-2 py-1 border-b border-beige-100">
+                          <input type="checkbox" checked={!!editCourse.lab} onChange={e => setEditCourse(p => ({...p, lab: e.target.checked}))}
+                            className="w-4 h-4 accent-primary" />
                         </td>
-                        <td style={{ padding: 6 }}>
-                          <button
-                            onClick={() => handleEditSave(idx)}
-                            style={{
-                              background: theme.primary,
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "4px 10px",
-                              marginRight: 6,
-                              cursor: "pointer"
-                            }}
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleEditCancel}
-                            style={{
-                              background: theme.danger,
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "4px 10px",
-                              cursor: "pointer"
-                            }}
-                          >
-                            Cancel
-                          </button>
+                        <td className="px-2 py-1 border-b border-beige-100">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEditSave(idx)}
+                              className="bg-primary hover:bg-primary-dark text-white text-xs px-2 py-1 rounded">Save</button>
+                            <button onClick={() => setEditIdx(null)}
+                              className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">Cancel</button>
+                          </div>
                         </td>
                       </tr>
                     ) : (
-                      <tr key={idx}>
-                        <td style={{ padding: 6 }}>{c.courseCode}</td>
-                        <td style={{ padding: 6 }}>{c.courseName}</td>
-                        <td style={{ padding: 6 }}>{c.staffName}</td>
-                        <td style={{ padding: 6, textAlign: "center" }}>
-                          {c.lab ? (
-                            <span style={{ color: "#27ae60", fontWeight: 600 }}>Yes</span>
-                          ) : (
-                            <span style={{ color: "#e74c3c", fontWeight: 600 }}>No</span>
-                          )}
+                      <tr key={idx} className="even:bg-beige-50">
+                        <td className="px-3 py-2 border-b border-beige-100">{c.courseCode}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{c.courseName}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">{c.staffName}</td>
+                        <td className="px-3 py-2 border-b border-beige-100">
+                          <span className={c.lab ? 'text-green-700 font-semibold' : 'text-red-600 font-semibold'}>{c.lab ? 'Yes' : 'No'}</span>
                         </td>
-                        <td style={{ padding: 6 }}>
-                          <button
-                            onClick={() => handleEditClick(idx)}
-                            style={{
-                              background: theme.primary,
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "4px 10px",
-                              marginRight: 6,
-                              cursor: "pointer"
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCourse(idx)}
-                            style={{
-                              background: theme.danger,
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "4px 10px",
-                              cursor: "pointer"
-                            }}
-                          >
-                            Delete
-                          </button>
+                        <td className="px-3 py-2 border-b border-beige-100">
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditIdx(idx); setEditCourse({...c}); }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded">Edit</button>
+                            <button onClick={() => setCourses(prev => prev.filter((_,i) => i !== idx))}
+                              className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">Remove</button>
+                          </div>
                         </td>
                       </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div style={{ textAlign: "center" }}>
-            <button
-              type="submit"
-              style={{
-                background: theme.accent,
-                color: "#fff",
-                border: "none",
-                borderRadius: 6,
-                padding: "10px 28px",
-                fontWeight: 600,
-                fontSize: 18,
-                cursor: "pointer",
-                marginTop: 10
-              }}
-            >
-              Submit Enrollment
-            </button>
-          </div>
-        </form>
-        {message && (
-          <div
-            style={{
-              marginTop: 18,
-              background: "#fff",
-              borderRadius: 6,
-              padding: "10px 18px",
-              color: message.includes("success") ? theme.primary : theme.danger,
-              border: `1px solid ${theme.border}`,
-              fontWeight: 500,
-              textAlign: "center"
-            }}
-          >
-            {message}
-          </div>
-        )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-        {/* Display all enrollments */}
-        <div style={{ marginTop: 40 }}>
-          <h3 style={{ color: theme.primary, textAlign: "center" }}>All Enrollments</h3>
+            <div className="text-center mt-2">
+              <button type="button" onClick={handleSubmit}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-8 rounded-xl transition-colors">
+                Submit Enrollment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* All Enrollments */}
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-lg font-bold text-primary mb-4">All Enrollments</h3>
           {allEnrollments.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#888" }}>No enrollments found.</div>
+            <p className="text-center text-gray-500">No enrollments found.</p>
           ) : (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 1px 8px #0001",
-                padding: 24,
-                marginTop: 16,
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "separate",
-                  borderSpacing: 0,
-                  fontSize: 16,
-                  background: "#fff",
-                }}
-              >
-                <thead>
-                  <tr style={{ background: theme.secondary }}>
-                    <th style={{ padding: "14px 10px", borderBottom: `2px solid ${theme.primary}`, textAlign: "left" }}>#</th>
-                    <th style={{ padding: "14px 10px", borderBottom: `2px solid ${theme.primary}`, textAlign: "left" }}>User ID</th>
-                    <th style={{ padding: "14px 10px", borderBottom: `2px solid ${theme.primary}`, textAlign: "left" }}>Courses Enrolled</th>
-                    <th style={{ padding: "14px 10px", borderBottom: `2px solid ${theme.primary}` }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allEnrollments.map((enroll, idx) => (
-                    <tr
-                      key={idx}
-                      style={{
-                        background: idx % 2 === 0 ? "#f9f9f9" : "#fff",
-                        borderBottom: `1px solid ${theme.border}`,
-                        verticalAlign: "top"
-                      }}
-                    >
-                      <td style={{ padding: "12px 10px", color: "#888" }}>{idx + 1}</td>
-                      <td style={{ padding: "12px 10px", fontWeight: 600, color: theme.primary }}>{enroll.userId}</td>
-                      <td style={{ padding: "12px 10px" }}>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                          {enroll.enrolled.map((c, i) => (
-                            <div
-                              key={i}
-                              style={{
-                                background: "#f7faff",
-                                border: `1px solid ${theme.border}`,
-                                borderRadius: 8,
-                                padding: "8px 14px",
-                                marginBottom: 6,
-                                minWidth: 180,
-                                boxShadow: "0 1px 3px #0001"
-                              }}
-                            >
-                              <div style={{ fontWeight: 500, color: theme.text }}>
-                                <span style={{ color: theme.accent }}>{c.courseCode}</span> — {c.courseName}
-                              </div>
-                              <div style={{ fontSize: 14, color: "#666" }}>
-                                <span style={{ fontWeight: 500 }}>Staff:</span> {c.staffName}
-                              </div>
-                              <div style={{ fontSize: 14, color: c.lab ? "#27ae60" : "#e74c3c", fontWeight: 600 }}>
-                                Lab: {c.lab ? "Yes" : "No"}
-                              </div>
-                            </div>
-                          ))}
+            <div className="flex flex-col gap-4">
+              {allEnrollments.map((enroll, idx) => (
+                <div key={idx} className="bg-white rounded-xl shadow p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-bold text-primary">{enroll.userId}</div>
+                    <button onClick={() => handleDelete(enroll.userId)}
+                      className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                      Delete
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {enroll.enrolled.map((c, i) => (
+                      <div key={i} className="bg-beige-50 border border-beige-200 rounded-lg px-3 py-2 min-w-[160px]">
+                        <div className="font-semibold text-primary-light text-sm">{c.courseCode}</div>
+                        <div className="text-sm text-gray-700">{c.courseName}</div>
+                        <div className="text-xs text-gray-500">Staff: {c.staffName}</div>
+                        <div className={`text-xs font-semibold mt-1 ${c.lab ? 'text-green-700' : 'text-gray-500'}`}>
+                          {c.lab ? 'Lab' : 'Room'}
                         </div>
-                      </td>
-                      <td style={{ padding: "12px 10px", textAlign: "center" }}>
-                        <button
-                          style={{
-                            background: theme.danger,
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 6,
-                            padding: "7px 18px",
-                            cursor: "pointer",
-                            fontWeight: 500,
-                            fontSize: 15,
-                            boxShadow: "0 1px 4px #0001"
-                          }}
-                          onClick={() => handleDelete(enroll.userId)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -534,4 +218,3 @@ const EnrollmentPage = () => {
     </div>
   );
 }
-export default EnrollmentPage;

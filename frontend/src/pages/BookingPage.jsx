@@ -3,236 +3,148 @@ import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Sidebar from '../components/Sidebar';
 import Banner from '../components/Banner';
+import api from '../utils/api';
 
 function getTodayDayNumber() {
-  const jsDay = new Date().getDay();
-  return jsDay === 0 ? 1 : jsDay > 5 ? 5 : jsDay;
+  const d = new Date().getDay();
+  return d === 0 ? 1 : d > 5 ? 5 : d;
 }
-// ✅ Utility to check if a date is today or in the future
-function isFutureOrToday(slotStartTime) {
-  var date = new Date().toISOString();
-  const now = new Date();
-  var [dateStr,time] = date.split('T');
-  dateStr = `${dateStr}T${slotStartTime}:00`;
-  const dateStrObj = new Date(dateStr);
-  return dateStrObj >= now;
-}
-export default function BookingPage({User}) {
 
-  const user = JSON.parse(localStorage.getItem('user'));
+function isFutureOrToday(slotStartTime) {
+  if (!slotStartTime) return false;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  return new Date(`${todayStr}T${slotStartTime}:00`) >= now;
+}
+
+export default function BookingPage({ user }) {
+  const storedUser = user || JSON.parse(localStorage.getItem('user'));
+  const isReadOnly = storedUser?.role === 'student';
   const [periods, setPeriods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [projectorBookings, setProjectorBookings] = useState([]);
+  const [holiday, setHoliday] = useState(null);
   const navigate = useNavigate();
 
   const today = new Date();
-  const todayStr = today.toLocaleDateString();
+  const todayStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const todayDay = getTodayDayNumber();
+  const isWeekend = today.getDay() === 0 || today.getDay() === 6;
 
-  useEffect(() => {
-    if (!user) return;
-    async function fetchPeriods() {
-      setLoading(true);
-      try {
-        // Always fetch periods from the weektable for the CURRENT logged-in userId
-        const res = await fetch(
-          `http://localhost:5000/api/weekperiod-details?userId=${user.userId}`
-        );
-        let data = await res.json();
-        if (!Array.isArray(data)) data = [];
-        // Use only this user's weektable for period details
-        const todayPeriods = [];
-        for (let i = 1; i <= 8; i++) {
-          const found = data.find(
-            p => p.day === todayDay && p.periodNo === i
-          );
-          if (found) {
-            todayPeriods.push(found);
-          } else {
-            todayPeriods.push({
-              periodNo: i,
-              day: todayDay,
-              periodId: `${todayDay}-${i}`,
-              free: true,
-              staffName: '',
-              courseCode: '',
-              roomNo: '',
-              projector: false
-            });
-          }
-        }
-        setPeriods(todayPeriods);
-      } catch {
-        setPeriods(Array.from({ length: 8 }, (_, i) => ({
-          periodNo: i + 1,
+  const fetchPeriods = async () => {
+    if (!storedUser) return;
+    setLoading(true);
+    try {
+      const res = await api.get(`/weekperiod-details?userId=${storedUser.userId}`);
+      let data = Array.isArray(res.data) ? res.data : [];
+      const todayPeriods = Array.from({ length: 8 }, (_, i) => {
+        const periodNo = i + 1;
+        return data.find(p => p.day === todayDay && p.periodNo === periodNo) || {
+          periodNo,
           day: todayDay,
-          periodId: `${todayDay}-${i + 1}`,
+          periodId: `${periodNo}-${todayDay}`,
           free: true,
           staffName: '',
           courseCode: '',
           roomNo: '',
-          projector: false
-        })));
-      }
-      setLoading(false);
-    }
-    fetchPeriods();
-  }, [user?.userId, todayDay]);
-
-  useEffect(() => {
-    if (!user) return;
-    async function fetchProjectorBookings() {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/projector-bookings?userId=${user.userId}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          // Now data is periods where projector is not empty string
-          setProjectorBookings(data.map(b => b.periodId));
-        } else {
-          setProjectorBookings([]);
-        }
-      } catch {
-        setProjectorBookings([]);
-      }
-    }
-    fetchProjectorBookings();
-  }, [user?.userId, todayDay]);
-
-  const handleFree = async (period) => {
-    setLoading(true);
-    try {
-      await fetch(`http://localhost:5000/api/free-period/${period.periodId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.userId })
+          lab: '',
+          projector: '',
+          startTime: '',
+          endTime: ''
+        };
       });
-      const res = await fetch(
-        `http://localhost:5000/api/weekperiod-details?userId=${user?.userId}`
-      );
-      const data = await res.json();
-      setPeriods(data.filter(p => p.day === todayDay).sort((a, b) => a.periodNo - b.periodNo));
+      setPeriods(todayPeriods);
     } catch {
       setPeriods([]);
     }
     setLoading(false);
   };
 
-  const handleBookProjector = (period) => {
-    navigate('/projectorlisting', { state: { period } });
+  useEffect(() => {
+    // Check if today is a holiday
+    const todayStr = today.toISOString().split('T')[0];
+    api.get('/admin/holidays').then(res => {
+      const h = res.data.find(h => h.date === todayStr);
+      setHoliday(h || null);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetchPeriods(); }, [storedUser?.userId, todayDay]);
+
+  const handleFree = async (period) => {
+    setLoading(true);
+    try {
+      await api.post(`/free-period/${period.periodId}`, { userId: storedUser?.userId });
+      await fetchPeriods();
+    } catch {
+      setLoading(false);
+    }
   };
 
-  const handleBookPeriod = (period) => {
-    // Pass both period and user in navigation state
-    navigate('/rooms', { state: { period, user } });
-  };
+  const handleBookRoom = (period) => navigate('/rooms', { state: { period, user: storedUser } });
+  const handleBookProjector = (period) => navigate('/projectorlisting', { state: { period } });
 
-  function hasBookedProjector(periodId) {
-    return projectorBookings.includes(periodId);
-  }
+  const facilityLabel = (period) => {
+    if (period.roomNo) return `Room: ${period.roomNo}`;
+    if (period.lab) return `Lab: ${period.lab}`;
+    return '';
+  };
 
   return (
-    <div style={{
-      paddingTop: 96,
-      minHeight: '100vh',
-      minWidth: '100vw',
-      background: 'linear-gradient(135deg, #f5f5dc 0%, #e3d9c6 100%)',
-      fontFamily: 'Segoe UI, Arial, sans-serif',
-      padding: 0,
-      margin: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center'
-    }}>
-      <Banner/>
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
+      <Banner />
       <Sidebar />
-      <h2 style={{
-        paddingTop:96,
-        color: '#7a5c1c',
-        fontSize: '2rem',
-        margin: '2rem 0 1.5rem 0',
-        letterSpacing: 1
-      }}>
-        {todayStr}
-      </h2>
-      <h3 style={{
-        color: '#7a5c1c',
-        fontSize: '1.3rem',
-        marginBottom: 24
-      }}>
-        {today.getDay() === 0 || today.getDay() === 6
-          ? 'There is no period today'
-          : 'Your Periods for Today'}
-      </h3>
-  
-      {(today.getDay() === 0 || today.getDay() === 6) ? null : (
-        loading ? (
+      <div className="pt-24 px-4 flex flex-col items-center pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-6 mb-1">{todayStr}</h2>
+        <h3 className="text-base text-primary-light mb-6">
+          {isWeekend ? 'No classes today (weekend)' : isReadOnly ? 'Your Timetable for Today' : 'Your Periods for Today'}
+        </h3>
+
+        {holiday ? (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl px-8 py-6 text-center max-w-sm">
+            <div className="text-3xl mb-2">🗓️</div>
+            <div className="font-bold text-red-700 text-lg">Holiday</div>
+            {holiday.label && <div className="text-red-600 mt-1">{holiday.label}</div>}
+            <div className="text-gray-500 text-sm mt-2">No bookings today</div>
+          </div>
+        ) : isWeekend ? null : loading ? (
           <LoadingSpinner message="Loading your periods..." />
         ) : (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-            width: '100%',
-            maxWidth: 900
-          }}>
-            {Array.from({ length: 2 }).map((_, rowIdx) => (
-              <div key={rowIdx} style={{ display: 'flex', flexWrap: 'nowrap', gap: 18 }}>
-                {periods.slice(rowIdx * 4, rowIdx * 4 + 4).map(period => (
-                  <div
-                    key={period.periodNo}
-                    style={{
-                      flex: '1 0 21%',
-                      background: period.free ? '#d4edda' : '#f8d7da',
-                      border: period.free ? '2px solid #a5d6a7' : '2px solid #ef9a9a',
-                      borderRadius: 12,
-                      padding: '1.2rem 1.5rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      marginBottom: 6,
-                      boxShadow: '0 2px 8px rgba(182,137,74,0.08)'
-                    }}
-                  >
-                    <div style={{
-                      fontWeight: 600,
-                      fontSize: '1.1rem',
-                      color: '#7a5c1c',
-                      marginBottom: 6
-                    }}>
-                      Period {period.periodNo}
+          <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {periods.map(period => {
+              const occupied = !period.free;
+              const hasProjector = !!period.projector;
+              const canAct = isFutureOrToday(period.startTime);
+
+              return (
+                <div
+                  key={period.periodNo}
+                  className={`rounded-xl border-2 p-4 flex flex-col gap-2 shadow-sm transition-shadow ${
+                    occupied
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-green-50 border-green-200'
+                  }`}
+                >
+                  <div className="font-bold text-primary text-base">Period {period.periodNo}</div>
+                  {period.startTime && (
+                    <div className="text-xs text-gray-500">{period.startTime} – {period.endTime}</div>
+                  )}
+                  <div className={`text-sm font-semibold ${occupied ? 'text-red-600' : 'text-green-700'}`}>
+                    {occupied ? 'Occupied' : 'Free'}
+                  </div>
+                  {occupied && (
+                    <div className="text-xs text-gray-600 space-y-0.5">
+                      {period.staffName && <div><b>Staff:</b> {period.staffName}</div>}
+                      {period.courseCode && <div><b>Course:</b> {period.courseCode}</div>}
+                      {facilityLabel(period) && <div>{facilityLabel(period)}</div>}
+                      {period.projector && <div><b>Projector:</b> {period.projector}</div>}
                     </div>
-                    {period.free ? (
-                      <div style={{ color: '#388e3c', marginBottom: 8, fontWeight: 500 }}>
-                        Free
-                      </div>
-                    ) : (
-                      <div style={{ color: '#b71c1c', marginBottom: 8, fontWeight: 500 }}>
-                        Occupied
-                      </div>
-                    )}
-                    {!period.free && (
-                      <div style={{ marginBottom: 8 }}>
-                        <div><b>Staff Name:</b> {period.staffName || '-'}</div>
-                        <div><b>Course Code:</b> {period.courseCode || '-'}</div>
-                        <div><b>{period.roomNo ? 'Room No:' : period.lab ? 'Lab:' : 'Room No:'}</b> {period.roomNo || period.lab || '-'}</div>
-                      </div>
-                    )}
-                    {isFutureOrToday(period.startTime)&&(<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {(period.free)? (
+                  )}
+                  {canAct && !isReadOnly && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {!occupied ? (
                         <button
-                          onClick={() => handleBookPeriod(period)}
-                          style={{
-                            background: '#7a5c1c',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 8,
-                            padding: '0.5rem 1.2rem',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                            fontSize: '1rem',
-                            transition: 'background 0.15s'
-                          }}
+                          onClick={() => handleBookRoom(period)}
+                          className="bg-primary text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-dark transition-colors"
                         >
                           Book
                         </button>
@@ -240,49 +152,28 @@ export default function BookingPage({User}) {
                         <>
                           <button
                             onClick={() => handleFree(period)}
-                            style={{
-                              background: '#b6894a',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 8,
-                              padding: '0.5rem 1.2rem',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              fontSize: '1rem',
-                              transition: 'background 0.15s'
-                            }}
+                            className="bg-primary-light text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary transition-colors"
                           >
                             Free
                           </button>
-                          {!hasBookedProjector(period.periodId) && (
+                          {!hasProjector && (
                             <button
                               onClick={() => handleBookProjector(period)}
-                              style={{
-                                background: '#388e3c',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: 8,
-                                padding: '0.5rem 1.2rem',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '1rem',
-                                transition: 'background 0.15s'
-                              }}
+                              className="bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
                             >
-                              Book Projector
+                              + Projector
                             </button>
                           )}
                         </>
                       )}
-                    </div>)}
-                  </div>
-                ))}
-              </div>
-            ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )
-      )}
+        )}
+      </div>
     </div>
   );
-  
 }

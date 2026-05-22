@@ -2,207 +2,106 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Banner from '../components/Banner';
 import Sidebar from '../components/Sidebar';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../utils/api';
 
-export default function RoomListingPage({User}) {
+export default function RoomListingPage({ user }) {
   const [rooms, setRooms] = useState([]);
   const [labs, setLabs] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingType, setBookingType] = useState(null);
+  const [bookingTarget, setBookingTarget] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [bookingType, setBookingType] = useState(null); // 'room' or 'lab'
-  const [bookingTarget, setBookingTarget] = useState(null); // room or lab object
   const navigate = useNavigate();
   const location = useLocation();
-  // Get user and period from navigation state (preferred) or fallback to localStorage for user
+
   const period = location.state?.period;
-  const user = location.state?.user || JSON.parse(localStorage.getItem('user'));
+  const currentUser = location.state?.user || user || JSON.parse(localStorage.getItem('user'));
 
-  // Fetch all room facilities from backend for this period
-  const fetchRooms = () => {
-    if (!period || !period.periodId) {
-      setRooms([]);
-      setLabs([]);
-      return;
-    }
-    fetch(`http://localhost:5000/api/rooms?periodId=${period.periodId}`)
-      .then(res => res.json())
-      .then(data => {
-        setRooms(data);
-      });
-    fetch(`http://localhost:5000/api/labs?periodId=${period.periodId}`)
-      .then(res => res.json())
-      .then(data => {
-        setLabs(data);
-      });
+  const fetchFacilities = async () => {
+    if (!period?.periodId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const [roomRes, labRes] = await Promise.all([
+        api.get(`/rooms?periodId=${period.periodId}`),
+        api.get(`/labs?periodId=${period.periodId}`)
+      ]);
+      setRooms(roomRes.data);
+      setLabs(labRes.data);
+    } catch { setRooms([]); setLabs([]); }
+    setLoading(false);
   };
 
-  // Fetch enrolled courses for dropdown
-  useEffect(() => {
-    if (user && user.userId) {
-      fetch(`http://localhost:5000/api/enrollment/courses?userId=${user.userId}`)
-        .then(res => res.json())
-        .then(data => setCourses(data || []));
-    }
-  }, [user]);
+  useEffect(() => { fetchFacilities(); }, [period?.periodId]);
 
   useEffect(() => {
-    fetchRooms();
-  }, []);
+    if (!currentUser?.userId) return;
+    api.get(`/enrollment/courses?userId=${currentUser.userId}`)
+      .then(res => setCourses(res.data || []))
+      .catch(() => setCourses([]));
+  }, [currentUser?.userId]);
 
-  // Booking logic for rooms (now opens course selection modal)
-  const handleBookRoom = (room) => {
-    setBookingType('room');
-    setBookingTarget(room);
-  };
-
-  // Booking logic for labs (now opens course selection modal)
-  const handleBookLab = (lab) => {
-    setBookingType('lab');
-    setBookingTarget(lab);
-  };
-
-  // Confirm booking after course selection
   const handleConfirmBooking = async () => {
-    if (!selectedCourse || !user || !user.userId || !period || !period.periodId) {
+    if (!selectedCourse || !currentUser?.userId || !period?.periodId) {
       alert('Please select a course.');
       return;
     }
     try {
-      let url, body;
-      if (bookingType === 'room') {
-        url = 'http://localhost:5000/api/book-room';
-        body = {
-          userId: user.userId,
-          periodId: period.periodId,
-          roomName: bookingTarget.name,
-          staffName: selectedCourse.staffName,
-          courseCode: selectedCourse.courseCode
-        };
-      } else if (bookingType === 'lab') {
-        url = 'http://localhost:5000/api/book-lab';
-        body = {
-          userId: user.userId,
-          periodId: period.periodId,
-          labName: bookingTarget.name,
-          staffName: selectedCourse.staffName,
-          courseCode: selectedCourse.courseCode
-        };
-      }
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        alert(data.error || 'Booking failed');
-      } else {
-        alert(bookingType === 'room' ? 'Room booked!' : 'Lab booked!');
-        setBookingType(null);
-        setBookingTarget(null);
-        setSelectedCourse(null);
-        setTimeout(() => navigate('/booking'), 100);
-      }
+      const endpoint = bookingType === 'room' ? '/book-room' : '/book-lab';
+      const body = {
+        userId: currentUser.userId,
+        periodId: period.periodId,
+        staffName: selectedCourse.staffName,
+        courseCode: selectedCourse.courseCode,
+        ...(bookingType === 'room' ? { roomName: bookingTarget.name } : { labName: bookingTarget.name })
+      };
+      await api.post(endpoint, body);
+      alert(`${bookingType === 'room' ? 'Room' : 'Lab'} booked successfully!`);
+      setBookingType(null);
+      setBookingTarget(null);
+      setSelectedCourse(null);
+      navigate('/booking');
     } catch (err) {
-      alert('Could not connect to backend.');
+      alert(err.response?.data?.error || 'Booking failed');
     }
   };
 
   return (
-    <div style={{
-      paddingTop:96,
-      minHeight: '100vh',
-      minWidth: '100vw',
-      background: 'linear-gradient(135deg, #f5f5dc 0%, #e3d9c6 100%)',
-      fontFamily: 'Segoe UI, Arial, sans-serif',
-      padding: 0,
-      margin: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center'
-    }}>
-      <Banner/>
+    <div className="min-h-screen w-full bg-gradient-to-br from-beige-50 to-beige-100">
+      <Banner />
       <Sidebar />
-      <h2 style={{
-        paddingTop:96,
-        color: '#7a5c1c',
-        fontSize: '2rem',
-        margin: '2rem 0 1.5rem 0',
-        letterSpacing: 1
-      }}>
-        Room & Lab Listing
-      </h2>
+
       {/* Course selection modal */}
       {bookingType && bookingTarget && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.25)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{
-            background: '#fff',
-            padding: '2rem',
-            borderRadius: 12,
-            minWidth: 320,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <h3 style={{ marginBottom: 16 }}>
-              Select Course for Booking
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm flex flex-col gap-4">
+            <h3 className="text-center font-bold text-primary text-lg">
+              Select Course — {bookingTarget.name}
             </h3>
             <select
-              style={{ width: '100%', padding: '0.5rem', fontSize: '1rem', marginBottom: 16 }}
-              value={selectedCourse ? selectedCourse.courseCode : ''}
-              onChange={e => {
-                const course = courses.find(c => c.courseCode === e.target.value);
-                setSelectedCourse(course || null);
-              }}
+              className="border border-beige-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-full"
+              value={selectedCourse?.courseCode || ''}
+              onChange={e => setSelectedCourse(courses.find(c => c.courseCode === e.target.value) || null)}
             >
               <option value="">-- Select Course --</option>
-              {courses.map(course => (
-                <option key={course.courseCode} value={course.courseCode}>
-                  {course.courseCode} - {course.courseName} ({course.staffName})
+              {courses.map(c => (
+                <option key={c.courseCode} value={c.courseCode}>
+                  {c.courseCode} – {c.courseName} ({c.staffName})
                 </option>
               ))}
             </select>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="flex gap-3">
               <button
                 onClick={handleConfirmBooking}
-                style={{
-                  background: '#7a5c1c',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  cursor: 'pointer'
-                }}
                 disabled={!selectedCourse}
+                className="flex-1 bg-primary text-white font-semibold py-2 rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
-                Confirm Booking
+                Confirm
               </button>
               <button
-                onClick={() => {
-                  setBookingType(null);
-                  setBookingTarget(null);
-                  setSelectedCourse(null);
-                }}
-                style={{
-                  background: '#bdbdbd',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  cursor: 'pointer'
-                }}
+                onClick={() => { setBookingType(null); setBookingTarget(null); setSelectedCourse(null); }}
+                className="flex-1 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
@@ -210,181 +109,66 @@ export default function RoomListingPage({User}) {
           </div>
         </div>
       )}
-      <div style={{
-        display: 'flex',
-        gap: 32,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        width: '100%',
-        maxWidth: 1200
-      }}>
-        {/* Rooms */}
-        {rooms.map(room => (
-          <div
-            key={'room-' + room.name}
-            style={{
-              padding: '2rem 2.5rem',
-              background: room.free ? '#d4edda' : '#f8d7da',
-              borderRadius: 16,
-              minWidth: 200,
-              minHeight: 160,
-              textAlign: 'center',
-              marginBottom: 24,
-              boxShadow: '0 4px 16px rgba(182,137,74,0.12)',
-              border: '2px solid #e3d9c6',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              transition: 'transform 0.15s, box-shadow 0.15s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.04)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(182,137,74,0.18)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(182,137,74,0.12)';
-            }}
-          >
-            <div style={{
-              fontWeight: 600,
-              fontSize: '1.3rem',
-              color: '#7a5c1c',
-              marginBottom: 10
-            }}>
-              {room.name}
-            </div>
-            <div style={{
-              fontSize: '1.1rem',
-              marginBottom: 18,
-              color: room.free ? '#388e3c' : '#b71c1c',
-              fontWeight: 500
-            }}>
-              Status: {room.free ? 'Free' : 'Occupied'}
-            </div>
-            {room.free ? (
-              <button
-                onClick={() => handleBookRoom(room)}
-                style={{
-                  background: '#7a5c1c',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  marginTop: 8,
-                  transition: 'background 0.15s'
-                }}
-              >
-                Book Room
-              </button>
-            ) : (
-             <button
-                disabled
-                style={{
-                  background: '#bdbdbd',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  marginTop: 8,
-                  cursor: 'not-allowed'
-                }}
-              >
-                Occupied
-              </button>
-            )}
+
+      <div className="pt-24 px-4 flex flex-col items-center pb-10">
+        <h2 className="text-2xl font-bold text-primary mt-6 mb-6">Room & Lab Listing</h2>
+        {period && (
+          <p className="text-sm text-gray-500 mb-4">
+            Period {period.periodNo} — {period.startTime} to {period.endTime}
+          </p>
+        )}
+
+        {loading ? (
+          <LoadingSpinner message="Loading facilities..." />
+        ) : (
+          <div className="w-full max-w-5xl flex flex-wrap gap-4 justify-center">
+            {rooms.map(room => (
+              <FacilityCard
+                key={'room-' + room.name}
+                name={room.name}
+                label="Room"
+                free={room.free}
+                onBook={() => { setBookingType('room'); setBookingTarget(room); }}
+              />
+            ))}
+            {labs.map(lab => (
+              <FacilityCard
+                key={'lab-' + lab.name}
+                name={lab.name}
+                label="Lab"
+                free={lab.free}
+                onBook={() => { setBookingType('lab'); setBookingTarget(lab); }}
+              />
+            ))}
           </div>
-        ))}
-        {/* Labs */}
-        {labs.map(lab => (
-          <div
-            key={'lab-' + lab.name}
-            style={{
-              padding: '2rem 2.5rem',
-              background: lab.free ? '#d4edda' : '#f8d7da',
-              borderRadius: 16,
-              minWidth: 200,
-              minHeight: 160,
-              textAlign: 'center',
-              marginBottom: 24,
-              boxShadow: '0 4px 16px rgba(182,137,74,0.12)',
-              border: '2px solid #e3d9c6',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              transition: 'transform 0.15s, box-shadow 0.15s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.04)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(182,137,74,0.18)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(182,137,74,0.12)';
-            }}
-          >
-            <div style={{
-              fontWeight: 600,
-              fontSize: '1.3rem',
-              color: '#1c5c7a',
-              marginBottom: 10
-            }}>
-              {lab.name}
-            </div>
-            <div style={{
-              fontSize: '1.1rem',
-              marginBottom: 18,
-              color: lab.free ? '#388e3c' : '#b71c1c',
-              fontWeight: 500
-            }}>
-              Status: {lab.free ? 'Free' : 'Occupied'}
-            </div>
-            {lab.free ? (
-              <button
-                onClick={() => handleBookLab(lab)}
-                style={{
-                  background: '#1c5c7a',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  marginTop: 8,
-                  transition: 'background 0.15s'
-                }}
-              >
-                Book Lab
-              </button>
-            ) : (
-              <button
-                disabled
-                style={{
-                  background: '#bdbdbd',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.7rem 1.5rem',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  marginTop: 8,
-                  cursor: 'not-allowed'
-                }}
-              >
-                Occupied
-              </button>
-            )}
-          </div>
-        ))}
+        )}
       </div>
+    </div>
+  );
+}
+
+function FacilityCard({ name, label, free, onBook }) {
+  return (
+    <div className={`rounded-xl border-2 p-5 flex flex-col items-center gap-3 w-44 shadow-sm transition-shadow hover:shadow-md ${
+      free ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+    }`}>
+      <div className="font-bold text-primary text-sm text-center">{name}</div>
+      <div className="text-xs font-medium text-gray-500">{label}</div>
+      <div className={`text-sm font-semibold ${free ? 'text-green-700' : 'text-red-600'}`}>
+        {free ? 'Free' : 'Occupied'}
+      </div>
+      {free ? (
+        <button
+          onClick={onBook}
+          className="bg-primary text-white text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-primary-dark transition-colors"
+        >
+          Book
+        </button>
+      ) : (
+        <button disabled className="bg-gray-300 text-gray-500 text-xs font-semibold px-4 py-1.5 rounded-lg cursor-not-allowed">
+          Occupied
+        </button>
+      )}
     </div>
   );
 }

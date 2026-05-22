@@ -1,158 +1,110 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Sidebar() {
-  const storedUser = localStorage.getItem('user');
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const stored = localStorage.getItem('user');
+  const user = stored ? JSON.parse(stored) : null;
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const close = () => setOpen(false);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    close();
+    navigate('/');
+  };
+
+  if (!user) return null;
+
+  const isFaculty = ['faculty'].includes(user.role);
+  const isSecretary = ['secretary'].includes(user.role);
+  const isStudentRep = ['student_rep'].includes(user.role);
+  const isStudent = user.role === 'student';
+  const isAdmin = user.role === 'admin';
 
   return (
     <>
-      {/* Hamburger Icon */}
+      {/* Hamburger */}
       <button
         onClick={() => setOpen(!open)}
-        style={{
-          position: 'fixed',
-          top: 24,
-          left: 24,
-          zIndex: 1101,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0
-        }}
+        className="fixed top-5 left-5 z-[1200] flex flex-col gap-1.5 p-1 bg-transparent border-none cursor-pointer"
         aria-label="Toggle Sidebar"
       >
-        <div style={{
-          width: 32,
-          height: 4,
-          background: '#b6894a',
-          margin: '6px 0',
-          borderRadius: 2,
-          transition: '0.3s'
-        }} />
-        <div style={{
-          width: 32,
-          height: 4,
-          background: '#b6894a',
-          margin: '6px 0',
-          borderRadius: 2,
-          transition: '0.3s'
-        }} />
-        <div style={{
-          width: 32,
-          height: 4,
-          background: '#b6894a',
-          margin: '6px 0',
-          borderRadius: 2,
-          transition: '0.3s'
-        }} />
+        <span className="block w-7 h-1 bg-primary-light rounded" />
+        <span className="block w-7 h-1 bg-primary-light rounded" />
+        <span className="block w-7 h-1 bg-primary-light rounded" />
       </button>
 
-      {/* Sidebar */}
-      <nav
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: open ? 0 : -240,
-          width: 220,
-          height: '100vh',
-          background: '#f5f5dc', // beige
-          padding: '2rem 1rem',
-          boxShadow: open ? '2px 0 16px rgba(182,137,74,0.15)' : 'none',
-          transition: 'left 0.3s',
-          zIndex: 1100,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <div style={{ fontWeight: 700, color: '#7a5c1c', fontSize: '1.3rem', marginBottom: '2rem', textAlign: 'center', letterSpacing: 1 }}>
-          Menu
-        </div>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}><li>
-          <Link to="/home" onClick={() => setOpen(false)} style={linkStyle}>Home</Link>
-          </li>
-          {['secretary'].includes(user.role) && (
-            <li>
-              <Link to="/facilitywiseBooking" onClick={() => setOpen(false)} style={linkStyle}>Facilitywise Booking</Link>
-              <Link to="/halls" onClick={() => setOpen(false)} style={linkStyle}>Halls</Link>
-              <Link to="/auditorium" onClick={() => setOpen(false)} style={linkStyle}>Auditorium</Link>
-              <Link to="/messages" onClick={() => setOpen(false)} style={linkStyle}>Messages</Link>
-            </li>
-          )}
-          {['faculty'].includes(user.role) && (
-            <li>
-              <Link to="/facilitywiseBooking" onClick={() => setOpen(false)} style={linkStyle}>Facilitywise Booking</Link>
-              <Link to="/halls" onClick={() => setOpen(false)} style={linkStyle}>Halls</Link>
-              <Link to="/messages" onClick={() => setOpen(false)} style={linkStyle}>Messages</Link>
-            </li>
-          )}
-          {user.role === 'student' && (
-            <li>
-              <Link to="/booking" onClick={() => setOpen(false)} style={linkStyle}>Bookings</Link>
-            </li>
-          )}
-
-          {user.role === 'admin' && (
-            <>
-              <li>
-                <Link to="/requests" onClick={() => setOpen(false)} style={linkStyle}>Requests</Link>
-              </li>
-              <li>
-                <Link to="/history" onClick={() => setOpen(false)} style={linkStyle}>History</Link>
-              </li>
-              <li>
-                <Link to="/dashboard" onClick={() => setOpen(false)} style={linkStyle}>Dashboard</Link>
-              </li>
-              <li>
-                <Link to="/facilities" onClick={() => setOpen(false)} style={linkStyle}>Facilities</Link>
-              </li> 
-              <li>
-                <Link to="/enrollment" onClick={() => setOpen(false)} style={linkStyle}>Enrollment</Link>
-              </li>
-                <li>
-                <Link to="/timetable" onClick={() => setOpen(false)} style={linkStyle}>TimeTable</Link>
-              </li>
-              <li>
-                <Link to="/register" onClick={() => setOpen(false)} style={linkStyle}>Register</Link>
-              </li>
-            </>
-          )}
-          <li>
-            <Link to="/" onClick={() => {
-              localStorage.removeItem('user');
-              setOpen(false);
-              }} style={linkStyle}>SignOut</Link>
-          </li>
-        </ul>
-      </nav>
-      {/* Overlay when sidebar is open */}
+      {/* Overlay */}
       {open && (
         <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0,0,0,0.15)',
-            zIndex: 1099
-          }}
+          className="fixed inset-0 bg-black/20 z-[1099]"
+          onClick={close}
         />
       )}
+
+      {/* Sidebar panel */}
+      <nav
+        className={`fixed top-0 left-0 h-full w-56 bg-beige-50 border-r border-beige-100 shadow-lg z-[1100] flex flex-col pt-20 px-4 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <p className="text-primary font-bold text-lg text-center mb-6 tracking-wide">Menu</p>
+        <ul className="list-none p-0 m-0 flex flex-col gap-1 flex-1">
+          <NavItem to="/home" onClick={close}>Home</NavItem>
+
+          {(isFaculty || isSecretary || isStudentRep) && (
+            <NavItem to="/facilitywiseBooking" onClick={close}>Facilitywise Booking</NavItem>
+          )}
+          {isStudentRep && (
+            <NavItem to="/booking" onClick={close}>My Bookings</NavItem>
+          )}
+          {(isFaculty || isSecretary || isStudentRep) && (
+            <NavItem to="/halls" onClick={close}>Halls</NavItem>
+          )}
+          {isSecretary && (
+            <NavItem to="/auditorium" onClick={close}>Auditorium</NavItem>
+          )}
+          {(isFaculty || isSecretary || isStudentRep) && (
+            <NavItem to="/messages" onClick={close}>Messages</NavItem>
+          )}
+
+          {isStudent && (
+            <NavItem to="/booking" onClick={close}>My Timetable</NavItem>
+          )}
+
+          {isAdmin && (<>
+            <NavItem to="/requests" onClick={close}>Requests</NavItem>
+            <NavItem to="/history" onClick={close}>History</NavItem>
+            <NavItem to="/dashboard" onClick={close}>Dashboard</NavItem>
+            <NavItem to="/facilities" onClick={close}>Facilities</NavItem>
+            <NavItem to="/enrollment" onClick={close}>Enrollment</NavItem>
+            <NavItem to="/timetable" onClick={close}>Timetable</NavItem>
+            <NavItem to="/register" onClick={close}>Register</NavItem>
+          </>)}
+        </ul>
+
+        <button
+          onClick={handleSignOut}
+          className="mt-auto mb-6 w-full text-left px-4 py-2.5 rounded-lg text-primary font-medium hover:bg-beige-100 transition-colors"
+        >
+          Sign Out
+        </button>
+      </nav>
     </>
   );
 }
 
-const linkStyle = {
-  display: 'block',
-  padding: '0.75rem 1rem',
-  color: '#7a5c1c',
-  textDecoration: 'none',
-  borderRadius: '8px',
-  marginBottom: '0.5rem',
-  fontWeight: 500,
-  transition: 'background 0.2s, color 0.2s',
-  fontSize: '1.08rem'
-};
+function NavItem({ to, onClick, children }) {
+  return (
+    <li>
+      <Link
+        to={to}
+        onClick={onClick}
+        className="block px-4 py-2.5 rounded-lg text-primary font-medium hover:bg-beige-100 transition-colors text-sm"
+      >
+        {children}
+      </Link>
+    </li>
+  );
+}
