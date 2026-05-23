@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getCurrentWeekStart, localDateStr, checkHoliday } = require('../utils');
+const { getCurrentWeekStart, localDateStr, checkHoliday, propagatePeriodUpdate } = require('../utils');
 const User = require('../models/User');
 const Weektable = require('../models/Weektable');
-const Enrollment = require('../models/Enrollment');
 const BookingHistory = require('../models/BookingHistory');
 const { auth } = require('../middleware/auth');
 
@@ -14,51 +13,6 @@ function periodDate(periodId) {
   const d = new Date(weekStart);
   d.setDate(weekStart.getDate() + day - 1);
   return localDateStr(d);
-}
-
-/**
- * Propagates a period state change across all users who share the same class:
- *   1. All users enrolled in `courseCode` (from Enrollment collection)
- *   2. All users whose weektable period at `periodId` already has `courseCode`
- *      (catches faculty whose timetable defines the class)
- * The union of both sets is updated, excluding the user who triggered the change.
- * If a matched user's period has no courseCode yet, it is set automatically.
- */
-async function propagatePeriodUpdate(weekStart, periodId, courseCode, bookerUserId, applyFn) {
-  if (!courseCode) return;
-
-  // 1. Enrollment-based: students enrolled in this course
-  const enrollments = await Enrollment.find({ 'enrolled.courseCode': courseCode });
-  const targetUserIds = new Set(enrollments.map(e => e.userId));
-
-  // 2. Weektable-based: anyone whose weektable already has this periodId+courseCode
-  //    (primarily catches faculty who have a timetable)
-  const weekWeektables = await Weektable.find({ weekStart, userId: { $ne: bookerUserId } });
-  for (const wt of weekWeektables) {
-    if (wt.periods.some(p => p.periodId === periodId && p.courseCode === courseCode)) {
-      targetUserIds.add(wt.userId);
-    }
-  }
-
-  targetUserIds.delete(bookerUserId);
-
-  const saves = [];
-  for (const userId of targetUserIds) {
-    // Prefer already-loaded weektable, fallback to DB query
-    let wt = weekWeektables.find(w => w.userId === userId);
-    if (!wt) wt = await Weektable.findOne({ userId, weekStart });
-    if (!wt) continue;
-
-    const p = wt.periods.find(p => p.periodId === periodId);
-    if (!p) continue;
-
-    applyFn(p);
-    // Stamp courseCode onto periods that didn't have it yet (students without timetable)
-    if (!p.courseCode) p.courseCode = courseCode;
-
-    saves.push(wt.save());
-  }
-  await Promise.all(saves);
 }
 
 // ── Projector ────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ const Weektable = require('./models/Weektable');
 const Timetable = require('./models/Timetable');
 const Period = require('./models/Period');
 const HolidayDay = require('./models/HolidayDay');
+const Enrollment = require('./models/Enrollment');
 
 function localDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -126,6 +127,44 @@ async function regenerateWeektablesForUser(userId) {
   }
 }
 
+/**
+ * Propagates a period booking/free change to all other users sharing the same course+period.
+ * Matches via:
+ *   1. Enrollment collection  — users enrolled in courseCode
+ *   2. Weektable collection   — users whose weektable already has courseCode at periodId
+ * applyFn(period) mutates the matched period object before saving.
+ */
+async function propagatePeriodUpdate(weekStart, periodId, courseCode, bookerUserId, applyFn) {
+  if (!courseCode) return;
+
+  const enrollments = await Enrollment.find({ 'enrolled.courseCode': courseCode });
+  const targetUserIds = new Set(enrollments.map(e => e.userId));
+
+  const weekWeektables = await Weektable.find({ weekStart, userId: { $ne: bookerUserId } });
+  for (const wt of weekWeektables) {
+    if (wt.periods.some(p => p.periodId === periodId && p.courseCode === courseCode)) {
+      targetUserIds.add(wt.userId);
+    }
+  }
+
+  targetUserIds.delete(bookerUserId);
+
+  const saves = [];
+  for (const userId of targetUserIds) {
+    let wt = weekWeektables.find(w => w.userId === userId);
+    if (!wt) wt = await Weektable.findOne({ userId, weekStart });
+    if (!wt) continue;
+
+    const p = wt.periods.find(p => p.periodId === periodId);
+    if (!p) continue;
+
+    applyFn(p);
+    if (!p.courseCode) p.courseCode = courseCode;
+    saves.push(wt.save());
+  }
+  await Promise.all(saves);
+}
+
 module.exports = {
   getWeekStart,
   getCurrentWeekStart,
@@ -133,6 +172,7 @@ module.exports = {
   getNextWeekStart,
   ensureWeektablesForAllUsers,
   regenerateWeektablesForUser,
+  propagatePeriodUpdate,
   PERIOD_TIMES,
   localDateStr,
   checkHoliday,

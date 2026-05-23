@@ -6,7 +6,7 @@ const BookingHistory = require('../models/BookingHistory');
 const Facility = require('../models/Facility');
 const SpecialWorkingDay = require('../models/SpecialWorkingDay');
 const HolidayDay = require('../models/HolidayDay');
-const { getWeekStart } = require('../utils');
+const { getWeekStart, propagatePeriodUpdate } = require('../utils');
 const { auth } = require('../middleware/auth');
 
 function parseLocalDate(dateStr) { return new Date(dateStr + 'T12:00:00'); }
@@ -179,7 +179,14 @@ router.post('/facilities/book', auth, async (req, res) => {
     else if (type === 'projector') { slotData.projector = facility; }
     else return res.status(400).json({ error: 'Invalid facility type' });
 
+    const courseCode = slotData.courseCode || '';
     await wt.save();
+
+    await propagatePeriodUpdate(weekStart, periodId, courseCode, userId, p => {
+      if (type === 'room') { p.roomNo = facility; p.free = false; }
+      else if (type === 'lab') { p.lab = facility; p.free = false; }
+      else if (type === 'projector') { p.projector = facility; }
+    });
 
     const user = await User.findOne({ userId });
     await BookingHistory.create({ userId: user._id, periodId, usageDate: dateObj, facility: { name: facility, type, free: false } });
