@@ -25,7 +25,6 @@ export default function AuditoriumRequest({ user }) {
     setSubmitted(false);
     setError('');
     setPdfFile(null);
-    setForm(f => ({ ...f, venue: audi.name }));
   };
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -43,9 +42,13 @@ export default function AuditoriumRequest({ user }) {
     if (!pdfFile) { setError('Please upload a supporting PDF (max 2MB).'); return; }
     setError('');
     const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
     fd.append('userId', userId);
     fd.append('venue', selected.name);
+    fd.append('date', form.date);
+    fd.append('startTime', form.startTime);
+    fd.append('endTime', form.endTime);
+    fd.append('eventName', form.eventName);
+    fd.append('additionalInfo', form.additionalInfo || '');
     fd.append('pdf', pdfFile);
     try {
       const res = await fetch('/api/audi-request', {
