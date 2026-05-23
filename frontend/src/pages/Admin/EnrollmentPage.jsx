@@ -15,6 +15,7 @@ export default function EnrollmentPage() {
   const [editIdx, setEditIdx] = useState(null);
   const [editCourse, setEditCourse] = useState({ courseCode: '', courseName: '', staffName: '', lab: false });
   const [allEnrollments, setAllEnrollments] = useState([]);
+  const [courseGroups, setCourseGroups] = useState([]);
 
   const notify = (msg, err = false) => { setMessage(msg); setIsError(err); };
 
@@ -25,7 +26,14 @@ export default function EnrollmentPage() {
     } catch { setAllEnrollments([]); }
   };
 
-  useEffect(() => { fetchEnrollments(); }, []);
+  const fetchCourseGroups = async () => {
+    try {
+      const res = await api.get('/enrollment/course-groups');
+      setCourseGroups(res.data);
+    } catch { setCourseGroups([]); }
+  };
+
+  useEffect(() => { fetchEnrollments(); fetchCourseGroups(); }, []);
 
   const handleAddCourse = (e) => {
     e.preventDefault();
@@ -211,6 +219,59 @@ export default function EnrollmentPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Course Groups — shows which students share a course with a rep or faculty */}
+        <div className="max-w-4xl mx-auto mt-10">
+          <h3 className="text-lg font-bold text-primary mb-1">Booking Propagation Groups</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Courses where a student rep or faculty shares enrollment with students.
+            When the rep or faculty books a room, all listed students will see it automatically.
+          </p>
+          {courseGroups.length === 0 ? (
+            <p className="text-center text-gray-500">No shared-course groups found.</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {courseGroups.map((group, idx) => {
+                const students = group.users.filter(u => u.role === 'student');
+                const bookers = group.users.filter(u => u.role === 'student_rep' || u.role === 'faculty');
+                return (
+                  <div key={idx} className="bg-white rounded-xl shadow p-4 border-l-4 border-indigo-400">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <span className="font-bold text-primary text-base">{group.courseCode}</span>
+                      <span className="text-gray-700 text-sm">{group.courseName}</span>
+                      <span className="text-xs text-gray-400">Staff: {group.staffName}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${group.lab ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {group.lab ? 'Lab' : 'Room'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-6">
+                      <div>
+                        <div className="text-xs font-semibold text-indigo-600 mb-1">Bookers (Rep / Faculty)</div>
+                        <div className="flex flex-wrap gap-2">
+                          {bookers.map((u, i) => (
+                            <span key={i} className={`text-xs px-2 py-1 rounded-lg font-semibold ${u.role === 'faculty' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                              {u.userId} <span className="font-normal opacity-70">({u.role === 'student_rep' ? 'rep' : 'faculty'})</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500 mb-1">Students who will see the booking</div>
+                        <div className="flex flex-wrap gap-2">
+                          {students.map((u, i) => (
+                            <span key={i} className="text-xs px-2 py-1 rounded-lg bg-beige-100 text-gray-700 font-medium">
+                              {u.userId}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
