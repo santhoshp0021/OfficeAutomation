@@ -162,7 +162,13 @@ async function deleteUserCascade(userId) {
     await Timetable.deleteOne({ userId });
   }
   await Weektable.deleteMany({ userId });
-  await Enrollment.deleteOne({ userId });
+  // Remove faculty enrollment if this user is a faculty
+  await Enrollment.deleteOne({ facultyId: userId });
+  // Remove this user from student/rep lists in all faculty enrollments
+  await Enrollment.updateMany(
+    {},
+    { $pull: { 'courses.$[].students': userId, 'courses.$[].studentReps': userId } }
+  );
   await BookingHistory.deleteMany({ userId: user._id });
   await HallRequest.deleteMany({ userId });
   await AuditoriumRequest.deleteMany({ userId });
@@ -257,6 +263,20 @@ app.post('/api/timetable', auth, adminOnly, async (req, res) => {
       periods: periodDocs.map(p => p._id)
     });
     await regenerateWeektablesForUser(userId);
+
+    // Also regenerate for all students/reps enrolled under this faculty
+    const enrollment = await Enrollment.findOne({ facultyId: userId });
+    if (enrollment) {
+      const memberIds = new Set();
+      for (const course of enrollment.courses) {
+        course.studentReps.forEach(id => memberIds.add(id));
+        course.students.forEach(id => memberIds.add(id));
+      }
+      for (const memberId of memberIds) {
+        await regenerateWeektablesForUser(memberId);
+      }
+    }
+
     res.json({ success: true, timetable });
   } catch (err) {
     res.status(500).json({ error: 'Error creating timetable', details: err.message });

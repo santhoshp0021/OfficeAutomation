@@ -1,20 +1,50 @@
 const express = require('express');
 const router = express.Router();
 const Enrollment = require('../models/Enrollment');
-const User = require('../models/User');
 const { auth, adminOnly } = require('../middleware/auth');
+const { regenerateWeektablesForUser } = require('../utils');
 
+// GET courses visible to a userId
+//   faculty  → their own courses (courseCode, courseName, lab, staffName)
+//   student/rep → all courses they appear in across any faculty enrollment
 router.get('/courses', auth, async (req, res) => {
   const { userId } = req.query;
   if (!userId) return res.status(400).json({ error: 'userId required' });
   try {
-    const enrollment = await Enrollment.findOne({ userId });
-    res.json(enrollment ? enrollment.enrolled : []);
+    const facultyDoc = await Enrollment.findOne({ facultyId: userId });
+    if (facultyDoc) {
+      return res.json(facultyDoc.courses.map(c => ({
+        courseCode: c.courseCode,
+        courseName: c.courseName,
+        lab: c.lab,
+        staffName: userId,
+      })));
+    }
+
+    // student / rep
+    const docs = await Enrollment.find({
+      $or: [{ 'courses.students': userId }, { 'courses.studentReps': userId }],
+    });
+    const result = [];
+    for (const doc of docs) {
+      for (const c of doc.courses) {
+        if (c.students.includes(userId) || c.studentReps.includes(userId)) {
+          result.push({
+            courseCode: c.courseCode,
+            courseName: c.courseName,
+            lab: c.lab,
+            staffName: doc.facultyId,
+          });
+        }
+      }
+    }
+    return res.json(result);
   } catch {
-    res.status(500).json({ error: 'Error fetching enrolled courses' });
+    res.status(500).json({ error: 'Error fetching courses' });
   }
 });
 
+// GET all enrollment docs (admin)
 router.get('/all', auth, adminOnly, async (req, res) => {
   try {
     res.json(await Enrollment.find({}));
@@ -23,84 +53,105 @@ router.get('/all', auth, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', auth, adminOnly, async (req, res) => {
-  const { userId, enrolled } = req.body;
-  if (!userId || !Array.isArray(enrolled) || enrolled.length === 0) {
-    return res.status(400).json({ error: 'userId and enrolled (array of courses) are required' });
-  }
-  for (const course of enrolled) {
-    if (
-      typeof course.courseCode !== 'string' ||
-      typeof course.courseName !== 'string' ||
-      typeof course.staffName !== 'string' ||
-      typeof course.lab !== 'boolean'
-    ) {
-      return res.status(400).json({ error: 'Each course must have courseCode, courseName, staffName (string), and lab (boolean)' });
+// GET propagation groups — one entry per (faculty, course) pair that has members
+router.get('/course-groups', auth, adminOnly, async (req, res) => {
+  try {
+    const docs = await Enrollment.find({});
+    const groups = [];
+    for (const doc of docs) {
+      for (const c of doc.courses) {
+        groups.push({
+          facultyId: doc.facultyId,
+          courseCode: c.courseCode,
+          courseName: c.courseName,
+          lab: c.lab,
+          studentReps: c.studentReps,
+          students: c.students,
+        });
+      }
     }
+    res.json(groups);
+  } catch {
+    res.status(500).json({ error: 'Error fetching course groups' });
+  }
+});
+
+// POST create or fully replace a faculty's enrollment
+// Body: { facultyId, courses: [{ courseCode, courseName, lab, studentReps?, students? }] }
+router.post('/', auth, adminOnly, async (req, res) => {
+  const { facultyId, courses } = req.body;
+  if (!facultyId || !Array.isArray(courses) || courses.length === 0) {
+    return res.status(400).json({ error: 'facultyId and courses array are required' });
+  }
+  for (const c of courses) {
+    if (!c.courseCode || !c.courseName || typeof c.lab !== 'boolean') {
+      return res.status(400).json({ error: 'Each course needs courseCode, courseName, and lab (boolean)' });
+    }
+    if (!Array.isArray(c.studentReps)) c.studentReps = [];
+    if (!Array.isArray(c.students)) c.students = [];
   }
   try {
-    let enrollment = await Enrollment.findOne({ userId });
-    if (enrollment) {
-      enrollment.enrolled = enrolled;
-      await enrollment.save();
-    } else {
-      enrollment = await Enrollment.create({ userId, enrolled });
+    const doc = await Enrollment.findOneAndUpdate(
+      { facultyId },
+      { facultyId, courses },
+      { upsert: true, new: true }
+    );
+
+    // Regenerate weektables for all members so their periods reflect the enrollment
+    const memberIds = new Set();
+    for (const c of courses) {
+      c.studentReps.forEach(id => memberIds.add(id));
+      c.students.forEach(id => memberIds.add(id));
     }
-    res.json(enrollment);
+    for (const memberId of memberIds) {
+      await regenerateWeektablesForUser(memberId);
+    }
+
+    res.json(doc);
   } catch (err) {
     res.status(500).json({ error: 'Error updating enrollment', details: err.message });
   }
 });
 
-router.delete('/:userId', auth, adminOnly, async (req, res) => {
+// PATCH add/remove members from one specific course
+// Body: { addStudents?, removeStudents?, addReps?, removeReps? }
+router.patch('/:facultyId/courses/:courseCode', auth, adminOnly, async (req, res) => {
+  const { facultyId, courseCode } = req.params;
+  const { addStudents = [], removeStudents = [], addReps = [], removeReps = [] } = req.body;
   try {
-    const result = await Enrollment.deleteOne({ userId: req.params.userId });
+    const doc = await Enrollment.findOne({ facultyId });
+    if (!doc) return res.status(404).json({ error: 'Enrollment not found' });
+    const course = doc.courses.find(c => c.courseCode === courseCode);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    addReps.forEach(id => { if (!course.studentReps.includes(id)) course.studentReps.push(id); });
+    course.studentReps = course.studentReps.filter(id => !removeReps.includes(id));
+
+    addStudents.forEach(id => { if (!course.students.includes(id)) course.students.push(id); });
+    course.students = course.students.filter(id => !removeStudents.includes(id));
+
+    await doc.save();
+
+    // Regenerate for newly added members
+    const newMembers = [...addStudents, ...addReps];
+    for (const memberId of newMembers) {
+      await regenerateWeektablesForUser(memberId);
+    }
+
+    res.json(doc);
+  } catch (err) {
+    res.status(500).json({ error: 'Error updating course members', details: err.message });
+  }
+});
+
+// DELETE all enrollment for a faculty
+router.delete('/:facultyId', auth, adminOnly, async (req, res) => {
+  try {
+    const result = await Enrollment.deleteOne({ facultyId: req.params.facultyId });
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Enrollment not found' });
     res.json({ message: 'Enrollment deleted' });
   } catch {
     res.status(500).json({ error: 'Error deleting enrollment' });
-  }
-});
-
-// Returns each course with all enrolled users and their roles.
-// Only courses that have at least one student AND at least one rep/faculty are returned,
-// because those are the groups where a booking by the rep/faculty will propagate to students.
-router.get('/course-groups', auth, adminOnly, async (req, res) => {
-  try {
-    const [enrollments, users] = await Promise.all([
-      Enrollment.find({}),
-      User.find({}, 'userId role')
-    ]);
-    const roleMap = Object.fromEntries(users.map(u => [u.userId, u.role]));
-
-    const groups = {};
-    for (const enroll of enrollments) {
-      for (const course of enroll.enrolled) {
-        if (!groups[course.courseCode]) {
-          groups[course.courseCode] = {
-            courseCode: course.courseCode,
-            courseName: course.courseName,
-            staffName: course.staffName,
-            lab: course.lab,
-            users: []
-          };
-        }
-        groups[course.courseCode].users.push({
-          userId: enroll.userId,
-          role: roleMap[enroll.userId] || 'unknown'
-        });
-      }
-    }
-
-    // Only emit groups where a rep or faculty exists alongside students
-    const result = Object.values(groups).filter(g =>
-      g.users.some(u => u.role === 'student') &&
-      g.users.some(u => u.role === 'student_rep' || u.role === 'faculty')
-    );
-
-    res.json(result);
-  } catch {
-    res.status(500).json({ error: 'Error fetching course groups' });
   }
 });
 

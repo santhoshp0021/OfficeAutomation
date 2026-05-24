@@ -229,7 +229,7 @@ function TimetableTab() {
               <select value={userId} onChange={e => setUserId(e.target.value)}
                 className="border border-beige-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[160px]">
                 <option value="">-- Select User --</option>
-                {enrollments.map(e => <option key={e.userId} value={e.userId}>{e.userId}</option>)}
+                {enrollments.map(e => <option key={e.facultyId} value={e.facultyId}>{e.facultyId}</option>)}
               </select>
             </div>
             {userId && (

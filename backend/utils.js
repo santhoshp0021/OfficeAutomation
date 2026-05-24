@@ -51,13 +51,27 @@ const PERIOD_TIMES = [
   { startTime: '15:55', endTime: '16:45' },
 ];
 
-async function generatePeriodsForUser(userId) {
-  const timetable = await Timetable.findOne({ userId });
-  let periods = [];
+function blankPeriods() {
+  const periods = [];
+  for (let day = 1; day <= 5; day++) {
+    for (let periodNo = 1; periodNo <= 8; periodNo++) {
+      periods.push({
+        periodNo, day, periodId: `${periodNo}-${day}`, free: true,
+        roomNo: '', courseCode: '', staffName: '', lab: '', projector: '',
+        startTime: PERIOD_TIMES[periodNo - 1].startTime,
+        endTime: PERIOD_TIMES[periodNo - 1].endTime,
+      });
+    }
+  }
+  return periods;
+}
 
+async function generatePeriodsForUser(userId) {
+  // Faculty: use their own timetable directly
+  const timetable = await Timetable.findOne({ userId });
   if (timetable && timetable.periods.length > 0) {
     const periodDocs = await Period.find({ _id: { $in: timetable.periods } });
-    periods = periodDocs.map(p => ({
+    return periodDocs.map(p => ({
       periodNo: p.periodNo,
       day: p.day,
       periodId: p.periodId,
@@ -70,26 +84,69 @@ async function generatePeriodsForUser(userId) {
       startTime: p.startTime || PERIOD_TIMES[p.periodNo - 1]?.startTime || '',
       endTime: p.endTime || PERIOD_TIMES[p.periodNo - 1]?.endTime || '',
     }));
-  } else {
-    for (let day = 1; day <= 5; day++) {
-      for (let periodNo = 1; periodNo <= 8; periodNo++) {
-        periods.push({
-          periodNo,
-          day,
-          periodId: `${periodNo}-${day}`,
-          free: true,
-          roomNo: '',
-          courseCode: '',
-          staffName: '',
-          lab: '',
-          projector: '',
-          startTime: PERIOD_TIMES[periodNo - 1].startTime,
-          endTime: PERIOD_TIMES[periodNo - 1].endTime,
-        });
+  }
+
+  // Students / reps: derive periods from every faculty enrollment they appear in
+  const enrollments = await Enrollment.find({
+    $or: [{ 'courses.students': userId }, { 'courses.studentReps': userId }],
+  });
+
+  if (enrollments.length > 0) {
+    const periodsMap = {}; // periodId -> period object
+
+    for (const enrollment of enrollments) {
+      const facultyTimetable = await Timetable.findOne({ userId: enrollment.facultyId });
+      if (!facultyTimetable || !facultyTimetable.periods.length) continue;
+
+      const facultyPeriods = await Period.find({ _id: { $in: facultyTimetable.periods } });
+
+      // Which course codes is this user enrolled in under this faculty?
+      const userCourseCodes = new Set(
+        enrollment.courses
+          .filter(c => c.students.includes(userId) || c.studentReps.includes(userId))
+          .map(c => c.courseCode)
+      );
+
+      for (const p of facultyPeriods) {
+        if (!p.courseCode || !userCourseCodes.has(p.courseCode)) continue;
+        const key = `${p.periodNo}-${p.day}`;
+        if (!periodsMap[key]) {
+          periodsMap[key] = {
+            periodNo: p.periodNo,
+            day: p.day,
+            periodId: key,
+            free: true,
+            roomNo: '',
+            courseCode: p.courseCode,
+            staffName: p.staffName || enrollment.facultyId,
+            lab: p.lab || '',
+            projector: '',
+            startTime: p.startTime || PERIOD_TIMES[p.periodNo - 1]?.startTime || '',
+            endTime: p.endTime || PERIOD_TIMES[p.periodNo - 1]?.endTime || '',
+          };
+        }
       }
     }
+
+    if (Object.keys(periodsMap).length > 0) {
+      // Fill the full 5×8 grid; slots not in any enrolled course stay blank-free
+      const periods = [];
+      for (let day = 1; day <= 5; day++) {
+        for (let periodNo = 1; periodNo <= 8; periodNo++) {
+          const key = `${periodNo}-${day}`;
+          periods.push(periodsMap[key] || {
+            periodNo, day, periodId: key, free: true,
+            roomNo: '', courseCode: '', staffName: '', lab: '', projector: '',
+            startTime: PERIOD_TIMES[periodNo - 1].startTime,
+            endTime: PERIOD_TIMES[periodNo - 1].endTime,
+          });
+        }
+      }
+      return periods;
+    }
   }
-  return periods;
+
+  return blankPeriods();
 }
 
 // Called on server startup — only creates missing weektables, never overwrites existing bookings
@@ -128,18 +185,27 @@ async function regenerateWeektablesForUser(userId) {
 }
 
 /**
- * Propagates a period booking/free change to all other users sharing the same course+period.
- * Matches via:
- *   1. Enrollment collection  — users enrolled in courseCode
- *   2. Weektable collection   — users whose weektable already has courseCode at periodId
+ * Propagates a period booking/free change to all members of the same course group.
+ * Primary source: Enrollment model (facultyId + course.studentReps + course.students).
+ * Fallback:       any weektable that already has courseCode at the same periodId.
  * applyFn(period) mutates the matched period object before saving.
  */
 async function propagatePeriodUpdate(weekStart, periodId, courseCode, bookerUserId, applyFn) {
   if (!courseCode) return;
 
-  const enrollments = await Enrollment.find({ 'enrolled.courseCode': courseCode });
-  const targetUserIds = new Set(enrollments.map(e => e.userId));
+  const targetUserIds = new Set();
 
+  // Primary: all members defined in enrollment
+  const enrollments = await Enrollment.find({ 'courses.courseCode': courseCode });
+  for (const enrollment of enrollments) {
+    const course = enrollment.courses.find(c => c.courseCode === courseCode);
+    if (!course) continue;
+    targetUserIds.add(enrollment.facultyId);
+    course.studentReps.forEach(id => targetUserIds.add(id));
+    course.students.forEach(id => targetUserIds.add(id));
+  }
+
+  // Fallback: weektables that already carry this courseCode at this periodId
   const weekWeektables = await Weektable.find({ weekStart, userId: { $ne: bookerUserId } });
   for (const wt of weekWeektables) {
     if (wt.periods.some(p => p.periodId === periodId && p.courseCode === courseCode)) {
