@@ -165,12 +165,37 @@ async function propagatePeriodUpdate(weekStart, periodId, courseCode, bookerUser
   await Promise.all(saves);
 }
 
+// Admin-triggered: generate weektables for all users from current week up to (and including) the week of tillDate
+async function ensureWeektablesUntil(tillDate) {
+  const users = await User.find({});
+  const target = getWeekStart(tillDate);
+  let created = 0, skipped = 0;
+
+  const cur = getCurrentWeekStart();
+  while (cur <= target) {
+    const weekStart = new Date(cur);
+    for (const user of users) {
+      const existing = await Weektable.findOne({ userId: user.userId, weekStart });
+      if (!existing) {
+        const periods = await generatePeriodsForUser(user.userId);
+        await Weektable.create({ userId: user.userId, periods, weekStart });
+        created++;
+      } else {
+        skipped++;
+      }
+    }
+    cur.setDate(cur.getDate() + 7);
+  }
+  return { created, skipped, users: users.length };
+}
+
 module.exports = {
   getWeekStart,
   getCurrentWeekStart,
   getWeekStartWithOffset,
   getNextWeekStart,
   ensureWeektablesForAllUsers,
+  ensureWeektablesUntil,
   regenerateWeektablesForUser,
   propagatePeriodUpdate,
   PERIOD_TIMES,

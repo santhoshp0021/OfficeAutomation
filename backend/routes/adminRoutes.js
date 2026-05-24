@@ -9,7 +9,7 @@ const Weektable = require('../models/Weektable');
 const HallRequest = require('../models/HallRequest');
 const SpecialWorkingDay = require('../models/SpecialWorkingDay');
 const HolidayDay = require('../models/HolidayDay');
-const { getWeekStart, PERIOD_TIMES } = require('../utils');
+const { getWeekStart, PERIOD_TIMES, ensureWeektablesUntil } = require('../utils');
 const { auth, adminOnly } = require('../middleware/auth');
 
 // Use local date parts so timezone never shifts the date string
@@ -192,6 +192,26 @@ router.delete('/special-days/:date', auth, adminOnly, async (req, res) => {
     await SpecialWorkingDay.deleteOne({ date: req.params.date });
     res.json({ message: 'Special day removed' });
   } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ─── Generate weektables up to a date ────────────────────────────────────────
+
+router.get('/weektable-coverage', auth, adminOnly, async (req, res) => {
+  try {
+    const latest = await Weektable.findOne({}).sort({ weekStart: -1 }).select('weekStart');
+    res.json({ latestWeekStart: latest?.weekStart || null });
+  } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/generate-weektables', auth, adminOnly, async (req, res) => {
+  const { tillDate } = req.body;
+  if (!tillDate) return res.status(400).json({ error: 'tillDate required' });
+  try {
+    const result = await ensureWeektablesUntil(parseLocalDate(tillDate));
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 // ─── Admin frees a period slot and notifies user ──────────────────────────────

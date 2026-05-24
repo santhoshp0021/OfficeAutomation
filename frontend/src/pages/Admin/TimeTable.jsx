@@ -497,6 +497,99 @@ function HolidaysTab() {
   );
 }
 
+// ── Weektable Generation tab ──────────────────────────────────────────────────
+
+function WeektableGenTab() {
+  const [tillDate, setTillDate] = useState('');
+  const [coverage, setCoverage] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [isErr, setIsErr] = useState(false);
+
+  const notify = (m, err = false) => { setMsg(m); setIsErr(err); setTimeout(() => setMsg(''), 5000); };
+
+  useEffect(() => {
+    api.get('/admin/weektable-coverage')
+      .then(r => setCoverage(r.data.latestWeekStart))
+      .catch(() => {});
+  }, [result]);
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    if (!tillDate) return notify('Select a till date', true);
+    const today = new Date().toISOString().slice(0, 10);
+    if (tillDate < today) return notify('Till date must be today or in the future', true);
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await api.post('/admin/generate-weektables', { tillDate });
+      setResult(res.data);
+      notify(`Done — ${res.data.created} new weektable(s) created, ${res.data.skipped} already existed`);
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to generate', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const coverageDate = coverage ? new Date(coverage).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'short' }) : null;
+
+  return (
+    <div className="max-w-xl mx-auto flex flex-col gap-6">
+      {msg && (
+        <p className={`text-sm px-3 py-2 rounded-lg ${isErr ? 'text-red-600 bg-red-50' : 'text-green-700 bg-green-50'}`}>{msg}</p>
+      )}
+
+      <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-5">
+        <h3 className="font-bold text-primary text-lg">Generate Weektables</h3>
+
+        <div className="bg-beige-50 border border-beige-200 rounded-xl px-4 py-3 text-sm">
+          <span className="font-semibold text-gray-700">Current coverage: </span>
+          {coverageDate
+            ? <span className="text-indigo-700 font-semibold">up to week of {coverageDate}</span>
+            : <span className="text-gray-400">none yet</span>
+          }
+        </div>
+
+        <form onSubmit={handleGenerate} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-semibold text-gray-700">Generate up to (till date)</label>
+            <input
+              type="date"
+              value={tillDate}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={e => setTillDate(e.target.value)}
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p className="text-xs text-gray-400">
+              Weektables will be created for all users from the current week through the week containing this date.
+              Weeks that already have weektables are skipped safely.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white font-semibold py-2.5 px-6 rounded-xl transition-colors w-fit"
+          >
+            {loading ? 'Generating…' : 'Generate Weektables'}
+          </button>
+        </form>
+
+        {result && (
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm flex flex-col gap-1">
+            <p className="font-semibold text-green-700">Generation complete</p>
+            <p className="text-gray-700">Users: <span className="font-semibold">{result.users}</span></p>
+            <p className="text-gray-700">New weektables created: <span className="font-semibold text-green-700">{result.created}</span></p>
+            <p className="text-gray-700">Already existed (skipped): <span className="font-semibold text-gray-500">{result.skipped}</span></p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main export with tabs ─────────────────────────────────────────────────────
 
 export default function TimeTable() {
@@ -507,16 +600,22 @@ export default function TimeTable() {
       <Sidebar />
       <div className="pt-24 px-4 pb-10">
         <div className="flex gap-1 justify-center mb-6 bg-white rounded-xl shadow p-1 w-fit mx-auto flex-wrap">
-          {[['timetable', 'Build Timetable'], ['special', 'Special Working Days'], ['holidays', 'Holidays / Off Days']].map(([key, label]) => (
+          {[
+            ['timetable', 'Build Timetable'],
+            ['weektables', 'Generate Weektables'],
+            ['special', 'Special Working Days'],
+            ['holidays', 'Holidays / Off Days'],
+          ].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === key ? 'bg-primary text-white' : 'text-gray-600 hover:bg-beige-50'}`}>
               {label}
             </button>
           ))}
         </div>
-        {tab === 'timetable' && <TimetableTab />}
-        {tab === 'special'   && <SpecialDaysTab />}
-        {tab === 'holidays'  && <HolidaysTab />}
+        {tab === 'timetable'  && <TimetableTab />}
+        {tab === 'weektables' && <WeektableGenTab />}
+        {tab === 'special'    && <SpecialDaysTab />}
+        {tab === 'holidays'   && <HolidaysTab />}
       </div>
     </div>
   );
