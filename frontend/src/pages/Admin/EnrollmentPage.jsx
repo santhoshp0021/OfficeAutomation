@@ -59,6 +59,7 @@ function MemberInput({ label, members, onAdd, onRemove, color }) {
 
 function EnrollmentForm({ facultyUsers, onSaved }) {
   const [facultyId, setFacultyId] = useState('');
+  const [staffName, setStaffName] = useState('');
   const [courses, setCourses] = useState([]);
   const [msg, setMsg] = useState('');
   const [isErr, setIsErr] = useState(false);
@@ -66,22 +67,25 @@ function EnrollmentForm({ facultyUsers, onSaved }) {
 
   // Load existing enrollment when faculty changes
   useEffect(() => {
-    if (!facultyId) { setCourses([]); return; }
+    if (!facultyId) { setStaffName(''); setCourses([]); return; }
     api.get('/enrollment/all')
       .then(res => {
         const existing = (res.data || []).find(e => e.facultyId === facultyId);
-        setCourses(existing
-          ? existing.courses.map(c => ({
-              courseCode: c.courseCode,
-              courseName: c.courseName,
-              lab: !!c.lab,
-              studentReps: [...(c.studentReps || [])],
-              students: [...(c.students || [])],
-            }))
-          : []
-        );
+        if (existing) {
+          setStaffName(existing.staffName || '');
+          setCourses(existing.courses.map(c => ({
+            courseCode: c.courseCode,
+            courseName: c.courseName,
+            lab: !!c.lab,
+            studentReps: [...(c.studentReps || [])],
+            students: [...(c.students || [])],
+          })));
+        } else {
+          setStaffName('');
+          setCourses([]);
+        }
       })
-      .catch(() => setCourses([]));
+      .catch(() => { setStaffName(''); setCourses([]); });
   }, [facultyId]);
 
   const addCourse = () =>
@@ -104,6 +108,7 @@ function EnrollmentForm({ facultyUsers, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!facultyId) return notify(setMsg, setIsErr, 'Select a faculty', true);
+    if (!staffName.trim()) return notify(setMsg, setIsErr, 'Enter the staff name', true);
     if (courses.length === 0) return notify(setMsg, setIsErr, 'Add at least one course', true);
     for (const c of courses) {
       if (!c.courseCode.trim() || !c.courseName.trim())
@@ -111,7 +116,7 @@ function EnrollmentForm({ facultyUsers, onSaved }) {
     }
     setSaving(true);
     try {
-      await api.post('/enrollment/', { facultyId, courses });
+      await api.post('/enrollment/', { facultyId, staffName: staffName.trim(), courses });
       notify(setMsg, setIsErr, `Enrollment saved for ${facultyId}`);
       onSaved();
     } catch (err) {
@@ -129,13 +134,26 @@ function EnrollmentForm({ facultyUsers, onSaved }) {
         <p className={`text-sm px-3 py-2 rounded-lg ${isErr ? 'text-red-600 bg-red-50' : 'text-green-700 bg-green-50'}`}>{msg}</p>
       )}
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-semibold text-gray-700">Faculty</label>
-        <select value={facultyId} onChange={e => setFacultyId(e.target.value)}
-          className="border border-beige-200 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/40">
-          <option value="">-- Select Faculty --</option>
-          {facultyUsers.map(u => <option key={u.userId} value={u.userId}>{u.userId}</option>)}
-        </select>
+      <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold text-gray-700">Faculty (Login ID)</label>
+          <select value={facultyId} onChange={e => setFacultyId(e.target.value)}
+            className="border border-beige-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">-- Select Faculty --</option>
+            {facultyUsers.map(u => <option key={u.userId} value={u.userId}>{u.userId}</option>)}
+          </select>
+        </div>
+        {facultyId && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-semibold text-gray-700">Staff Name (Display)</label>
+            <input
+              value={staffName}
+              onChange={e => setStaffName(e.target.value)}
+              placeholder="e.g. Dr. Smith"
+              className="border border-beige-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+        )}
       </div>
 
       {facultyId && (
@@ -218,8 +236,8 @@ function AllEnrollments({ enrollments, onDelete }) {
         <div key={doc.facultyId} className="bg-white rounded-xl shadow p-5 border-l-4 border-primary">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <span className="font-bold text-primary text-base">{doc.facultyId}</span>
-              <span className="ml-2 text-xs text-gray-400">Faculty · {doc.courses.length} course(s)</span>
+              <span className="font-bold text-primary text-base">{doc.staffName}</span>
+              <span className="ml-2 text-xs text-gray-400">({doc.facultyId}) · {doc.courses.length} course(s)</span>
             </div>
             <button onClick={() => onDelete(doc.facultyId)}
               className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
@@ -266,7 +284,7 @@ function AllEnrollments({ enrollments, onDelete }) {
                 {/* Propagation note */}
                 {(c.studentReps.length > 0 || c.students.length > 0) && (
                   <p className="text-xs text-gray-400 mt-2 italic">
-                    When <strong>{doc.facultyId}</strong> or any rep books a room for this course, all {c.students.length} student(s) see it automatically.
+                    When <strong>{doc.staffName}</strong> or any rep books a room for this course, all {c.students.length} student(s) see it automatically.
                   </p>
                 )}
               </div>

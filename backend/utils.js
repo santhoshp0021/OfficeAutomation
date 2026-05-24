@@ -118,7 +118,7 @@ async function generatePeriodsForUser(userId) {
             free: true,
             roomNo: '',
             courseCode: p.courseCode,
-            staffName: p.staffName || enrollment.facultyId,
+            staffName: p.staffName || enrollment.staffName || enrollment.facultyId,
             lab: p.lab || '',
             projector: '',
             startTime: p.startTime || PERIOD_TIMES[p.periodNo - 1]?.startTime || '',

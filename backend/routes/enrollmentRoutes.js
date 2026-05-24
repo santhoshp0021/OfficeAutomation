@@ -17,11 +17,11 @@ router.get('/courses', auth, async (req, res) => {
         courseCode: c.courseCode,
         courseName: c.courseName,
         lab: c.lab,
-        staffName: userId,
+        staffName: facultyDoc.staffName,
       })));
     }
 
-    // student / rep
+    // student / rep — collect all courses they appear in
     const docs = await Enrollment.find({
       $or: [{ 'courses.students': userId }, { 'courses.studentReps': userId }],
     });
@@ -33,7 +33,7 @@ router.get('/courses', auth, async (req, res) => {
             courseCode: c.courseCode,
             courseName: c.courseName,
             lab: c.lab,
-            staffName: doc.facultyId,
+            staffName: doc.staffName,
           });
         }
       }
@@ -62,6 +62,7 @@ router.get('/course-groups', auth, adminOnly, async (req, res) => {
       for (const c of doc.courses) {
         groups.push({
           facultyId: doc.facultyId,
+          staffName: doc.staffName,
           courseCode: c.courseCode,
           courseName: c.courseName,
           lab: c.lab,
@@ -77,11 +78,11 @@ router.get('/course-groups', auth, adminOnly, async (req, res) => {
 });
 
 // POST create or fully replace a faculty's enrollment
-// Body: { facultyId, courses: [{ courseCode, courseName, lab, studentReps?, students? }] }
+// Body: { facultyId, staffName, courses: [{ courseCode, courseName, lab, studentReps?, students? }] }
 router.post('/', auth, adminOnly, async (req, res) => {
-  const { facultyId, courses } = req.body;
-  if (!facultyId || !Array.isArray(courses) || courses.length === 0) {
-    return res.status(400).json({ error: 'facultyId and courses array are required' });
+  const { facultyId, staffName, courses } = req.body;
+  if (!facultyId || !staffName || !Array.isArray(courses) || courses.length === 0) {
+    return res.status(400).json({ error: 'facultyId, staffName, and courses array are required' });
   }
   for (const c of courses) {
     if (!c.courseCode || !c.courseName || typeof c.lab !== 'boolean') {
@@ -93,7 +94,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
   try {
     const doc = await Enrollment.findOneAndUpdate(
       { facultyId },
-      { facultyId, courses },
+      { facultyId, staffName, courses },
       { upsert: true, new: true }
     );
 

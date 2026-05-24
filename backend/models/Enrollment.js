@@ -10,6 +10,7 @@ const courseSchema = new mongoose.Schema({
 
 const enrollmentSchema = new mongoose.Schema({
   facultyId: { type: String, required: true, unique: true },
+  staffName: { type: String, required: true },   // display name, e.g. "Dr. Smith"
   courses:   { type: [courseSchema], default: [] },
 });
 
